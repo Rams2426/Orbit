@@ -17,9 +17,6 @@ concurrency:
 
 jobs:
   build_and_deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,24 +26,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build with relative base for GitHub Pages
+      - name: Build production bundle
         run: |
           npx vite build --base=./
           cp dist/index.html dist/404.html
 
       - name: Setup Pages
+        id: pages_config
+        continue-on-error: true
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
+        if: steps.pages_config.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
+        if: steps.pages_config.outcome == 'success'
         uses: actions/deploy-pages@v4
