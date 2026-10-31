@@ -80,14 +80,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     showToast,
   } = useOrbit();
 
-  const userPersonas: PersonaType[] = userProfile?.personas?.length
-    ? userProfile.personas
-    : ['designer'];
+  const userPersonas = useMemo<PersonaType[]>(
+    () => (userProfile?.personas?.length ? userProfile.personas : ['designer']),
+    [userProfile?.personas]
+  );
+  const primaryPersona: PersonaType = userPersonas[0] || 'designer';
   const hasDesigner = userPersonas.includes('designer');
   const hasStudent = userPersonas.includes('student');
   const hasBoth = hasDesigner && hasStudent;
 
-  const [domain, setDomain] = useState<PersonaType>(defaultDomain || userPersonas[0] || 'designer');
+  const [domain, setDomain] = useState<PersonaType>(defaultDomain || primaryPersona);
   const [title, setTitle] = useState('');
   const [contentType, setContentType] = useState<string>('Reel');
   const [dueDate, setDueDate] = useState('');
@@ -141,6 +143,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   }, [activePair, currentUser?.uid]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     setErrorMessage(null);
     setAttachmentFeedback(null);
     setIsSaving(false);
@@ -156,7 +160,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setDueTime(task.dueTime || '17:00');
       setPriority(task.priority || 'medium');
       setNotes(task.notes || '');
-      setDomain(task.domain || (userPersonas[0] as PersonaType) || 'designer');
+      setDomain(task.domain || primaryPersona);
       setContentType(task.contentType || (task.domain === 'student' ? 'Assignment' : 'Reel'));
       setTargetSchedule(task.teamId ? 'team' : task.pairId ? 'partner' : 'my');
       setAssigneeUid(task.assigneeUid || currentUser?.uid || '');
@@ -188,12 +192,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setTargetSchedule(defaultIsTeamTask && team ? 'team' : 'my');
       setAssigneeUid(currentUser?.uid || '');
 
-      const initialDomain: PersonaType = defaultDomain || userPersonas[0] || 'designer';
+      const initialDomain: PersonaType = defaultDomain || primaryPersona;
       setDomain(initialDomain);
       setContentType(initialDomain === 'student' ? 'Assignment' : 'Reel');
       setAttachmentItems([]);
     }
-  }, [task, defaultDueDate, defaultDomain, defaultIsTeamTask, isOpen, userPersonas, team, currentUser]);
+  }, [
+    isOpen,
+    task?.id,
+    defaultDueDate,
+    defaultDomain,
+    defaultIsTeamTask,
+    primaryPersona,
+    team?.id,
+    currentUser?.uid,
+  ]);
 
   // Close on Escape key
   useEffect(() => {

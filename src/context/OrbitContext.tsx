@@ -470,12 +470,11 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Keep selectedTaskForDetail in sync with latest updates
   useEffect(() => {
-    if (selectedTaskForDetail) {
-      const updated = allTasks.find((t) => t.id === selectedTaskForDetail.id);
-      if (updated) {
-        setSelectedTaskForDetail(updated);
-      }
-    }
+    setSelectedTaskForDetail((prev) => {
+      if (!prev) return prev;
+      const updated = allTasks.find((t) => t.id === prev.id);
+      return updated && updated !== prev ? updated : prev;
+    });
   }, [allTasks]);
 
   // User Team Role

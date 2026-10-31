@@ -45,7 +45,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
     return () => {
       isMounted = false;
     };
-  }, [isOpen, activePair]);
+  }, [isOpen]);
 
   // Render QR Code once invite is generated
   useEffect(() => {
