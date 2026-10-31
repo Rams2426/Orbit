@@ -10,3 +10,4 @@ coverage/
 .aistudio/
 bun.lock
 bun.lockb
+public/assets/aistudio/
