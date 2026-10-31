@@ -8,3 +8,5 @@ coverage/
 !.env.example
 .firebase/
 .aistudio/
+bun.lock
+bun.lockb
