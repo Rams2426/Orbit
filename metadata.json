@@ -1,0 +1,8 @@
+{
+  "name": "Remix Orbit",
+  "description": "A clean, modern personal schedule and deadline app for solo use, with optional linking to let another person add tasks to your schedule.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

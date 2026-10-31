@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with personal workflow settings and active pair binding",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "personas": {
+          "type": "array",
+          "description": "Roles chosen at onboarding: designer, student, or both"
+        },
+        "activePairId": { "type": "string", "maxLength": 128 },
+        "preferredView": { "type": "string", "enum": ["list", "month", "week"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Deadline schedule item with required date and exact time",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "pairId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 140 },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "dueTime": { "type": "string", "maxLength": 20 },
+        "priority": { "type": "string", "enum": ["urgent", "high", "medium", "low"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "brand": { "type": "string", "maxLength": 80 },
+        "contentType": { "type": "string", "maxLength": 80 },
+        "domain": { "type": "string", "enum": ["designer", "student"] },
+        "status": { "type": "string", "enum": ["pending", "done"] },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "completedAt": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "dueDate", "dueTime", "status", "createdBy"]
+    },
+    "Pair": {
+      "title": "Pair",
+      "description": "Private 1-to-1 workspace shared between exactly one boss and one freelancer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "bossUid": { "type": "string", "maxLength": 128 },
+        "freelancerUid": { "type": "string", "maxLength": 128 },
+        "bossEmail": { "type": "string", "maxLength": 128 },
+        "freelancerEmail": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending", "active"] },
+        "createdAt": { "type": "string" },
+        "pairedAt": { "type": "string" }
+      },
+      "required": ["id", "bossUid", "bossEmail", "status"]
+    },
+    "Invite": {
+      "title": "Invite",
+      "description": "One-time expiring invite link to join a private pair",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "pairId": { "type": "string", "maxLength": 128 },
+        "bossUid": { "type": "string", "maxLength": 128 },
+        "bossEmail": { "type": "string", "maxLength": 128 },
+        "expiresAt": { "type": "string" },
+        "accepted": { "type": "boolean" },
+        "acceptedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "pairId", "bossUid", "bossEmail", "expiresAt", "accepted"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Solo personal schedule deadlines"
+    },
+    "/pairs/{pairId}": {
+      "schema": { "$ref": "#/entities/Pair" },
+      "description": "Private 1-to-1 pair document"
+    },
+    "/pairs/{pairId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Collaborative deadlines scheduled within the private pair"
+    },
+    "/invites/{inviteId}": {
+      "schema": { "$ref": "#/entities/Invite" },
+      "description": "Expiring one-time invites"
+    }
+  }
+}

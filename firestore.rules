@@ -1,0 +1,235 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for User Profile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email'])
+        && data.uid is string && data.uid.size() <= 128 && data.uid == request.auth.uid
+        && data.email is string && data.email.size() <= 128
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128))
+        && (!('photoURL' in data) || (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 512)))
+        && (!('activePairId' in data) || (data.activePairId == null || (data.activePairId is string && data.activePairId.size() <= 128)))
+        && (!('activeTeamId' in data) || (data.activeTeamId == null || (data.activeTeamId is string && data.activeTeamId.size() <= 128)))
+        && (!('preferredView' in data) || (data.preferredView in ['home', 'calendar', 'tasks', 'entities', 'team', 'list', 'month', 'week']))
+        && (!('personas' in data) || (data.personas is list && data.personas.size() <= 5))
+        && (!('theme' in data) || (data.theme in ['light', 'dark', 'system']))
+        && (!('accentColor' in data) || (data.accentColor in ['purple', 'blue', 'green', 'orange', 'pink', 'red']))
+        && (!('textSize' in data) || (data.textSize in ['small', 'medium', 'large']))
+        && (!('weekStart' in data) || (data.weekStart in ['monday', 'sunday']))
+        && (!('timeFormat' in data) || (data.timeFormat in ['12h', '24h']))
+        && (!('notificationsEnabled' in data) || data.notificationsEnabled is bool)
+        && (!('reminderTime' in data) || (data.reminderTime in ['1h', '1d', '2d']))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Validation helper for Pair
+    function isValidPair(data) {
+      return data.keys().hasAll(['id', 'bossUid', 'bossEmail', 'status'])
+        && data.id is string && data.id.size() <= 128
+        && data.bossUid is string && data.bossUid.size() <= 128
+        && data.bossEmail is string && data.bossEmail.size() <= 128
+        && data.status in ['pending', 'active']
+        && (!('freelancerUid' in data) || (data.freelancerUid == null || (data.freelancerUid is string && data.freelancerUid.size() <= 128)))
+        && (!('freelancerEmail' in data) || (data.freelancerEmail == null || (data.freelancerEmail is string && data.freelancerEmail.size() <= 128)))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('pairedAt' in data) || (data.pairedAt == null || (data.pairedAt is string && data.pairedAt.size() <= 64)));
+    }
+
+    // Validation helper for Invite
+    function isValidInvite(data) {
+      return data.keys().hasAll(['id', 'pairId', 'bossUid', 'bossEmail', 'expiresAt', 'accepted'])
+        && data.id is string && data.id.size() <= 128
+        && data.pairId is string && data.pairId.size() <= 128
+        && data.bossUid is string && data.bossUid.size() <= 128
+        && data.bossEmail is string && data.bossEmail.size() <= 128
+        && data.expiresAt is string && data.expiresAt.size() <= 64
+        && data.accepted is bool
+        && (!('targetEmail' in data) || (data.targetEmail == null || (data.targetEmail is string && data.targetEmail.size() <= 128)))
+        && (!('acceptedByUid' in data) || (data.acceptedByUid == null || (data.acceptedByUid is string && data.acceptedByUid.size() <= 128)))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    // Validation helper for Task (Supports Solo, Pair, and Team tasks)
+    function isValidTask(data) {
+      return data.keys().hasAll(['id', 'title', 'dueDate', 'dueTime', 'status', 'createdBy'])
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.dueDate is string && data.dueDate.size() <= 40
+        && data.dueTime is string && data.dueTime.size() <= 20
+        && data.status in ['pending', 'todo', 'in_progress', 'submitted', 'changes_requested', 'approved', 'done']
+        && data.createdBy is string && data.createdBy.size() <= 128
+        && (!('userId' in data) || data.userId == null || (data.userId is string && data.userId.size() <= 128))
+        && (!('pairId' in data) || data.pairId == null || (data.pairId is string && data.pairId.size() <= 128))
+        && (!('teamId' in data) || data.teamId == null || (data.teamId is string && data.teamId.size() <= 128))
+        && (!('assigneeUid' in data) || data.assigneeUid == null || (data.assigneeUid is string && data.assigneeUid.size() <= 128))
+        && (!('assigneeName' in data) || data.assigneeName == null || (data.assigneeName is string && data.assigneeName.size() <= 128))
+        && (!('brand' in data) || data.brand == null || (data.brand is string && data.brand.size() <= 120))
+        && (!('contentType' in data) || data.contentType == null || (data.contentType is string && data.contentType.size() <= 80))
+        && (!('domain' in data) || (data.domain in ['designer', 'student']))
+        && (!('priority' in data) || (data.priority in ['urgent', 'high', 'medium', 'low']))
+        && (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 5000))
+        && (!('brief' in data) || data.brief == null || (data.brief is string && data.brief.size() <= 5000))
+        && (!('caption' in data) || data.caption == null || (data.caption is string && data.caption.size() <= 5000))
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 5000))
+        && (!('attachments' in data) || data.attachments is list)
+        && (!('comments' in data) || data.comments is list)
+        && (!('activityLog' in data) || data.activityLog is list)
+        && (!('completedAt' in data) || (data.completedAt == null || (data.completedAt is string && data.completedAt.size() <= 64)))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Helper functions for Pair
+    function getPair(pairId) {
+      return get(/databases/$(database)/documents/pairs/$(pairId)).data;
+    }
+
+    function isPairMember(pairId) {
+      return isSignedIn() && (
+        getPair(pairId).bossUid == request.auth.uid ||
+        getPair(pairId).freelancerUid == request.auth.uid
+      );
+    }
+
+    function isPairBoss(pairId) {
+      return isSignedIn() && getPair(pairId).bossUid == request.auth.uid;
+    }
+
+    // Helper functions for Team
+    function isTeamMember(teamId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+
+    function getTeamMember(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data;
+    }
+
+    function isTeamOwner(teamId) {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid ||
+        (isTeamMember(teamId) && getTeamMember(teamId).role == 'owner')
+      );
+    }
+
+    function isTeamOwnerOrAdmin(teamId) {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid ||
+        (isTeamMember(teamId) && getTeamMember(teamId).role in ['owner', 'admin'])
+      );
+    }
+
+    // 1. User Profiles & Solo Tasks Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(incoming())
+                    && incoming().uid == existing().uid;
+      allow delete: if false;
+
+      // Solo Tasks Subcollection: strictly isolated to the owner
+      match /tasks/{taskId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && incoming().createdBy == request.auth.uid && isValidTask(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidTask(incoming()) && incoming().createdBy == existing().createdBy;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+
+    // 2. Pairs Collection (Collaborative 1:1 Workspace)
+    match /pairs/{pairId} {
+      allow get: if isSignedIn() && (resource.data.bossUid == request.auth.uid || resource.data.freelancerUid == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.bossUid == request.auth.uid || resource.data.freelancerUid == request.auth.uid);
+      allow create: if isSignedIn() && incoming().bossUid == request.auth.uid && isValidPair(incoming());
+      allow update: if isSignedIn() && (
+        (resource.data.bossUid == request.auth.uid && incoming().bossUid == existing().bossUid && isValidPair(incoming()))
+        ||
+        (existing().status == 'pending' && existing().freelancerUid == null
+         && incoming().freelancerUid == request.auth.uid
+         && incoming().status == 'active'
+         && incoming().diff(existing()).affectedKeys().hasOnly(['freelancerUid', 'freelancerEmail', 'status', 'pairedAt']))
+      );
+      allow delete: if isSignedIn() && resource.data.bossUid == request.auth.uid;
+
+      // Collaborative Pair Tasks Subcollection
+      match /tasks/{taskId} {
+        allow get, list: if isPairMember(pairId);
+        allow create: if isPairMember(pairId) && incoming().createdBy == request.auth.uid && isValidTask(incoming());
+        allow delete: if isPairBoss(pairId) || (isPairMember(pairId) && resource.data.createdBy == request.auth.uid);
+        allow update: if isPairMember(pairId) && isValidTask(incoming()) && incoming().createdBy == existing().createdBy;
+      }
+    }
+
+    // 3. Invites Collection (1:1 Pair Invites)
+    match /invites/{inviteId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && resource.data.bossUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().bossUid == request.auth.uid && isValidInvite(incoming());
+      allow update: if isSignedIn()
+                    && existing().accepted == false
+                    && incoming().accepted == true
+                    && incoming().acceptedByUid == request.auth.uid
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['accepted', 'acceptedByUid']);
+      allow delete: if isSignedIn() && resource.data.bossUid == request.auth.uid;
+    }
+
+    // 4. Teams Collection (Team Space Workspace)
+    match /teams/{teamId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (resource.data.ownerUid == request.auth.uid || isTeamMember(teamId));
+      allow create: if isSignedIn() && incoming().ownerUid == request.auth.uid
+                    && incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 120;
+      allow update: if isTeamOwnerOrAdmin(teamId);
+      allow delete: if isTeamOwner(teamId);
+
+      // Team Members Subcollection
+      match /members/{memberUid} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && (request.auth.uid == memberUid || isTeamOwnerOrAdmin(teamId));
+        allow update: if isSignedIn() && (isTeamOwnerOrAdmin(teamId) || request.auth.uid == memberUid);
+        allow delete: if isSignedIn() && (request.auth.uid == memberUid || isTeamOwnerOrAdmin(teamId));
+      }
+
+      // Team Tasks Subcollection
+      match /tasks/{taskId} {
+        allow get, list: if isTeamMember(teamId);
+        allow create: if isTeamMember(teamId) && incoming().createdBy == request.auth.uid && isValidTask(incoming());
+        allow update: if isTeamMember(teamId) && isValidTask(incoming()) && incoming().createdBy == existing().createdBy;
+        allow delete: if isTeamOwnerOrAdmin(teamId) || (isTeamMember(teamId) && resource.data.createdBy == request.auth.uid);
+      }
+
+      // Team Single-Use 24h Invites Subcollection
+      match /invites/{inviteId} {
+        allow get: if isSignedIn();
+        allow list: if isTeamMember(teamId);
+        allow create: if isTeamMember(teamId) && incoming().createdByUid == request.auth.uid;
+        allow update: if isSignedIn() && (
+          isTeamOwnerOrAdmin(teamId)
+          ||
+          (existing().used == false && existing().revoked == false && incoming().used == true)
+        );
+        allow delete: if isTeamOwnerOrAdmin(teamId);
+      }
+    }
+  }
+}
