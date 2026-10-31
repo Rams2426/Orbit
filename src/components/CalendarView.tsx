@@ -47,6 +47,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
   }, [jumpToTodaySignal]);
 
+  // "Show completed" toggle (on by default, remembered in localStorage)
+  const [showCompleted, setShowCompleted] = useState<boolean>(() => {
+    return localStorage.getItem('orbit_calendar_show_completed') !== 'false';
+  });
+
+  const handleToggleShowCompleted = () => {
+    setShowCompleted((prev) => {
+      const next = !prev;
+      localStorage.setItem('orbit_calendar_show_completed', String(next));
+      return next;
+    });
+  };
+
+  // Filter tasks based on "Show completed" toggle
+  const visibleTasks = useMemo(() => {
+    return showCompleted ? tasks : tasks.filter((t) => t.status !== 'done');
+  }, [tasks, showCompleted]);
+
   // Arrow keys to move through the calendar on desktop
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -94,25 +112,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
-
-  // "Show completed" toggle (on by default, remembered in localStorage)
-  const [showCompleted, setShowCompleted] = useState<boolean>(() => {
-    return localStorage.getItem('orbit_calendar_show_completed') !== 'false';
-  });
-
-  const handleToggleShowCompleted = () => {
-    setShowCompleted((prev) => {
-      const next = !prev;
-      localStorage.setItem('orbit_calendar_show_completed', String(next));
-      return next;
-    });
-  };
-
-  // Filter tasks based on "Show completed" toggle
-  const visibleTasks = useMemo(() => {
-    return showCompleted ? tasks : tasks.filter((t) => t.status !== 'done');
-  }, [tasks, showCompleted]);
+  }, [focusedDateStr, todayStr, selectedDrawerDate, visibleTasks, onOpenNewTaskForDate]);
 
   const nowMs = Date.now();
   const next24hMs = nowMs + 24 * 60 * 60 * 1000;

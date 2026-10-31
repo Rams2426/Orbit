@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import {
   doc,
@@ -463,7 +463,10 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [currentUser, userProfile?.activeTeamId]);
 
   // Combined tasks list (solo + pair + team)
-  const allTasks = [...soloTasks, ...pairTasks, ...teamTasks];
+  const allTasks = useMemo(
+    () => [...soloTasks, ...pairTasks, ...teamTasks],
+    [soloTasks, pairTasks, teamTasks]
+  );
 
   // Keep selectedTaskForDetail in sync with latest updates
   useEffect(() => {
@@ -473,7 +476,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSelectedTaskForDetail(updated);
       }
     }
-  }, [soloTasks, pairTasks, teamTasks]);
+  }, [allTasks]);
 
   // User Team Role
   const userTeamRole: TeamRole | null = teamMembers.find((m) => m.uid === currentUser?.uid)?.role || null;
@@ -481,7 +484,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Deadline Alerts Engine
   useEffect(() => {
     if (!notificationsEnabled || allTasks.length === 0) {
-      setActiveAlertTask(null);
+      setActiveAlertTask((prev) => (prev === null ? prev : null));
       return;
     }
 
@@ -500,7 +503,9 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      setActiveAlertTask(alertTaskFound);
+      setActiveAlertTask((prev) =>
+        (prev?.id || null) === (alertTaskFound?.id || null) ? prev : alertTaskFound
+      );
 
       let windowMs = 60 * 60 * 1000;
       if (reminderTime === '1d') windowMs = 24 * 60 * 60 * 1000;
