@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { OrbitProvider, useOrbit } from './context/OrbitContext';
 import { LoginScreen } from './components/LoginScreen';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Sidebar, SidebarTab } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { HomeDashboard } from './components/HomeDashboard';
+import { HomeDashboard, StatFilterType } from './components/HomeDashboard';
 import { ListView } from './components/ListView';
 import { CalendarView } from './components/CalendarView';
 import { TeamSpace } from './components/TeamSpace';
@@ -14,7 +14,7 @@ import { TaskDetailModal } from './components/TaskDetailModal';
 import { InviteModal } from './components/InviteModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Task, ViewMode, PersonaType } from './types/orbit';
-import { Bell, CheckCircle2, X, AlertCircle, RotateCcw, Users } from 'lucide-react';
+import { Bell, CheckCircle2, X, AlertCircle, RotateCcw, Users, Keyboard } from 'lucide-react';
 
 const OrbitApp: React.FC = () => {
   const {
@@ -49,12 +49,20 @@ const OrbitApp: React.FC = () => {
 
   // Sub-view for calendar (month vs week)
   const [calendarSubView, setCalendarSubView] = useState<'month' | 'week'>('month');
+  const [jumpToTodaySignal, setJumpToTodaySignal] = useState<number>(0);
+
+  // Stat filter passed from Dashboard stat cards to Tasks list
+  const [statFilter, setStatFilter] = useState<StatFilterType>('all');
 
   // Persisted Left Sidebar collapsed state (desktop) & mobile slide-over drawer state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('orbit_sidebar_collapsed') === 'true';
   });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+
+  // Keyboard shortcuts help dialog ("?")
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleToggleSidebarCollapse = () => {
     setIsSidebarCollapsed((prev) => {
@@ -73,6 +81,12 @@ const OrbitApp: React.FC = () => {
     } else {
       updatePreferredView(tab as ViewMode);
     }
+  };
+
+  const handleSelectStatFilterFromDashboard = (filter: StatFilterType) => {
+    setStatFilter(filter);
+    setCurrentTab('tasks');
+    updatePreferredView('list');
   };
 
   // Filter States for Dashboard, Tasks, and Calendar views
@@ -102,6 +116,90 @@ const OrbitApp: React.FC = () => {
       setPendingTeamInviteCode(teamInviteParam);
     }
   }, []);
+
+  // Handlers for Task Modal
+  const handleOpenNewTask = () => {
+    setSelectedTaskToEdit(null);
+    setModalDefaultDueDate(undefined);
+    setModalDefaultDomain(undefined);
+    setModalDefaultIsTeamTask(false);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleOpenNewTeamTask = () => {
+    setSelectedTaskToEdit(null);
+    setModalDefaultDueDate(undefined);
+    setModalDefaultDomain('designer');
+    setModalDefaultIsTeamTask(true);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleOpenNewTaskForDate = (dateStr: string, isTeam = false) => {
+    setSelectedTaskToEdit(null);
+    setModalDefaultDueDate(dateStr);
+    setModalDefaultDomain(isTeam ? 'designer' : undefined);
+    setModalDefaultIsTeamTask(isTeam);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleOpenEditTask = (task: Task) => {
+    setSelectedTaskToEdit(task);
+    setModalDefaultDueDate(undefined);
+    setModalDefaultDomain(undefined);
+    setModalDefaultIsTeamTask(Boolean(task.teamId));
+    setIsTaskModalOpen(true);
+  };
+
+  // Global Desktop Keyboard Shortcuts:
+  // N -> New task
+  // / -> Focus search input (switches to Tasks if on Home)
+  // T -> Jump to Today in Calendar
+  // ? -> Toggle Keyboard Shortcuts Help Dialog
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (!currentUser || needsOnboarding) return;
+      const target = e.target as HTMLElement;
+      const isInputFocused =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable;
+
+      if (e.key === 'Escape' && isShortcutsModalOpen) {
+        setIsShortcutsModalOpen(false);
+        return;
+      }
+
+      if (isInputFocused || e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        handleOpenNewTask();
+      } else if (e.key === '/') {
+        e.preventDefault();
+        if (currentTab === 'home' || currentTab === 'team') {
+          setCurrentTab('tasks');
+          setTimeout(() => {
+            searchInputRef.current?.focus();
+          }, 50);
+        } else {
+          searchInputRef.current?.focus();
+        }
+      } else if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        if (currentTab !== 'calendar') {
+          setCurrentTab('calendar');
+        }
+        setJumpToTodaySignal((prev) => prev + 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [currentUser, needsOnboarding, currentTab, isShortcutsModalOpen]);
 
   const handleConfirmJoinTeamFromUrl = async () => {
     if (!pendingTeamInviteCode) return;
@@ -176,40 +274,7 @@ const OrbitApp: React.FC = () => {
     });
   }, [tasks, searchQuery, selectedBrand, selectedContentType, selectedDomainFilter]);
 
-  // Handlers for Task Modal
-  const handleOpenNewTask = () => {
-    setSelectedTaskToEdit(null);
-    setModalDefaultDueDate(undefined);
-    setModalDefaultDomain(undefined);
-    setModalDefaultIsTeamTask(false);
-    setIsTaskModalOpen(true);
-  };
-
-  const handleOpenNewTeamTask = () => {
-    setSelectedTaskToEdit(null);
-    setModalDefaultDueDate(undefined);
-    setModalDefaultDomain('designer');
-    setModalDefaultIsTeamTask(true);
-    setIsTaskModalOpen(true);
-  };
-
-  const handleOpenNewTaskForDate = (dateStr: string, isTeam = false) => {
-    setSelectedTaskToEdit(null);
-    setModalDefaultDueDate(dateStr);
-    setModalDefaultDomain(isTeam ? 'designer' : undefined);
-    setModalDefaultIsTeamTask(isTeam);
-    setIsTaskModalOpen(true);
-  };
-
-  const handleOpenEditTask = (task: Task) => {
-    setSelectedTaskToEdit(task);
-    setModalDefaultDueDate(undefined);
-    setModalDefaultDomain(undefined);
-    setModalDefaultIsTeamTask(Boolean(task.teamId));
-    setIsTaskModalOpen(true);
-  };
-
-  // Auth loading state
+  // Auth loading state with skeleton placeholder
   if (loadingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500">
@@ -227,7 +292,7 @@ const OrbitApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* 1-Hour Deadline Browser Alert Banner */}
       {activeAlertTask && (
         <div className="bg-[#534AB7] text-white px-4 py-2.5 text-xs shadow-md sticky top-0 z-50 flex items-center justify-between gap-3 animate-in slide-in-from-top duration-200">
@@ -320,11 +385,13 @@ const OrbitApp: React.FC = () => {
                 onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
                 darkMode={isDarkMode}
                 onToggleDarkMode={toggleDarkMode}
+                searchInputRef={searchInputRef}
+                onOpenShortcutsHelp={() => setIsShortcutsModalOpen(true)}
               />
             )}
 
-            {/* Views */}
-            <main className="flex-1 flex flex-col">
+            {/* Views with short cross-fade when switching */}
+            <main key={currentTab} className="flex-1 flex flex-col orbit-view-fade">
               {/* 1. Home Dashboard */}
               {currentTab === 'home' && (
                 <HomeDashboard
@@ -336,6 +403,7 @@ const OrbitApp: React.FC = () => {
                   onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
                   selectedContentType={selectedContentType}
                   onClearContentType={() => setSelectedContentType('all')}
+                  onSelectStatFilter={handleSelectStatFilterFromDashboard}
                 />
               )}
 
@@ -346,6 +414,7 @@ const OrbitApp: React.FC = () => {
                   tasks={filteredTasks}
                   onOpenEditTask={handleOpenEditTask}
                   onOpenNewTaskForDate={(dateStr) => handleOpenNewTaskForDate(dateStr, false)}
+                  jumpToTodaySignal={jumpToTodaySignal}
                 />
               )}
 
@@ -355,6 +424,9 @@ const OrbitApp: React.FC = () => {
                   tasks={filteredTasks}
                   onOpenEditTask={handleOpenEditTask}
                   onOpenNewTask={handleOpenNewTask}
+                  searchQuery={searchQuery}
+                  statFilter={statFilter}
+                  onClearStatFilter={() => setStatFilter('all')}
                 />
               )}
 
@@ -408,10 +480,77 @@ const OrbitApp: React.FC = () => {
             onClose={() => setIsSettingsModalOpen(false)}
           />
 
+          {/* Keyboard Shortcuts Help Dialog ("?") */}
+          {isShortcutsModalOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4"
+              onClick={() => setIsShortcutsModalOpen(false)}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="shortcuts-dialog-title"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1E1E26] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 orbit-modal-enter"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#262344] text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center">
+                      <Keyboard className="h-5 w-5 stroke-current" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3
+                        id="shortcuts-dialog-title"
+                        className="text-sm font-bold text-slate-900 dark:text-[#F2F2F7]"
+                      >
+                        Keyboard Shortcuts
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-[#A0A0B0]">
+                        Navigate Orbit faster on desktop
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsShortcutsModalOpen(false)}
+                    aria-label="Close keyboard shortcuts help"
+                    className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F2F2F7] cursor-pointer"
+                  >
+                    <X className="h-4 w-4 stroke-current" strokeWidth={2} />
+                  </button>
+                </div>
+
+                <div className="space-y-2.5 text-xs">
+                  {[
+                    { key: 'N', desc: 'Open New task modal' },
+                    { key: '/', desc: 'Focus instant task search' },
+                    { key: 'T', desc: 'Jump to Today in Calendar' },
+                    { key: '← ↑ ↓ →', desc: 'Move through days in Calendar' },
+                    { key: 'Enter', desc: 'Open focused Calendar day' },
+                    { key: 'Esc', desc: 'Close active modal or dialog' },
+                    { key: '?', desc: 'Show or hide this shortcuts guide' },
+                  ].map((item) => (
+                    <div
+                      key={item.key}
+                      className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70"
+                    >
+                      <span className="text-slate-700 dark:text-[#F2F2F7] font-medium">
+                        {item.desc}
+                      </span>
+                      <kbd className="px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] font-bold text-slate-800 dark:text-[#8B7BFF] shadow-2xs">
+                        {item.key}
+                      </kbd>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Join Team from QR / Invite Link Confirmation Modal */}
           {pendingTeamInviteCode && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-              <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#1E1E26] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
+              <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#1E1E26] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl orbit-modal-enter">
                 <div className="h-11 w-11 rounded-xl bg-[#EEEDFE] dark:bg-[#262344] text-[#534AB7] dark:text-[#8B7BFF] flex items-center justify-center mb-4">
                   <Users className="h-6 w-6 stroke-current" strokeWidth={2} />
                 </div>
@@ -449,7 +588,7 @@ const OrbitApp: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-16 md:bottom-6 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-slate-900 text-white dark:bg-[#1E1E26] dark:text-[#F2F2F7] shadow-xl border border-slate-800 dark:border-slate-700 animate-in slide-in-from-bottom duration-200 text-xs font-semibold backdrop-blur-md"
+          className="fixed bottom-16 md:bottom-6 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-slate-900 text-white dark:bg-[#1E1E26] dark:text-[#F2F2F7] shadow-xl border border-slate-800 dark:border-slate-700 orbit-modal-enter text-xs font-semibold backdrop-blur-md"
         >
           {toast.type === 'success' ? (
             <CheckCircle2 className="h-5 w-5 stroke-current text-emerald-400 dark:text-emerald-400 shrink-0" strokeWidth={2} />

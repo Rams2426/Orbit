@@ -22,6 +22,7 @@ import {
   LogOut,
   Users,
   Menu,
+  HelpCircle,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -44,6 +45,8 @@ interface TopBarProps {
   onOpenMobileMenu?: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
+  onOpenShortcutsHelp?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -66,6 +69,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenMobileMenu,
   darkMode,
   onToggleDarkMode,
+  searchInputRef,
+  onOpenShortcutsHelp,
 }) => {
   const {
     currentUser,
@@ -452,6 +457,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="sr-only">{darkMode ? 'Light mode' : 'Dark mode'}</span>
           </button>
 
+          {/* Keyboard Shortcuts (?) Help Dialog Button */}
+          {onOpenShortcutsHelp && (
+            <button
+              type="button"
+              onClick={onOpenShortcutsHelp}
+              title="Keyboard shortcuts (?)"
+              aria-label="Keyboard shortcuts help"
+              className="hidden sm:flex min-w-[40px] min-h-[40px] h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-[#F2F2F7] dark:hover:bg-[#24242E] dark:active:bg-[#24242E] cursor-pointer transition-colors"
+            >
+              <HelpCircle className="h-5 w-5 stroke-current" strokeWidth={2} />
+              <span className="sr-only">Keyboard shortcuts</span>
+            </button>
+          )}
+
           {/* Settings Modal */}
           <button
             type="button"
@@ -473,10 +492,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="relative flex-1 min-w-[180px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 stroke-current text-slate-400 dark:text-[#A0A0B0] pointer-events-none" strokeWidth={2} />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search tasks..."
+              placeholder="Search tasks... (Press /)"
+              aria-label="Search tasks"
               className="w-full pl-9 pr-9 py-1.5 min-h-[36px] text-xs rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] dark:placeholder-[#A0A0B0]"
             />
             {searchQuery && (

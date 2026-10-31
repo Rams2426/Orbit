@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Task } from '../types/orbit';
-import { ChevronLeft, ChevronRight, Clock, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle2, GripVertical } from 'lucide-react';
 import { TaskDrawer } from './TaskDrawer';
 import { useOrbit } from '../context/OrbitContext';
 import { formatTimeDisplay } from '../utils/timeFormat';
@@ -10,6 +10,7 @@ interface CalendarViewProps {
   tasks: Task[];
   onOpenEditTask: (task: Task) => void;
   onOpenNewTaskForDate: (dateStr: string) => void;
+  jumpToTodaySignal?: number;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -17,13 +18,83 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   tasks,
   onOpenEditTask,
   onOpenNewTaskForDate,
+  jumpToTodaySignal = 0,
 }) => {
-  const { weekStart, timeFormat, setSelectedTaskForDetail } = useOrbit();
+  const { weekStart, timeFormat, setSelectedTaskForDetail, updateTask, showToast } = useOrbit();
   const isMondayStart = weekStart === 'monday';
+
+  // Real today string YYYY-MM-DD in local time
+  const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
 
   // Real device current date
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [focusedDateStr, setFocusedDateStr] = useState<string>(todayStr);
   const [selectedDrawerDate, setSelectedDrawerDate] = useState<Date | null>(null);
+
+  // Drag-and-drop state
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverDateStr, setDragOverDateStr] = useState<string | null>(null);
+
+  // Desktop hover preview state
+  const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null);
+
+  // Respond to external "T" (Jump to Today) shortcut signal
+  useEffect(() => {
+    if (jumpToTodaySignal > 0) {
+      const now = new Date();
+      setCurrentDate(now);
+      setFocusedDateStr(now.toLocaleDateString('en-CA'));
+    }
+  }, [jumpToTodaySignal]);
+
+  // Arrow keys to move through the calendar on desktop
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (
+        e.key === 'ArrowLeft' ||
+        e.key === 'ArrowRight' ||
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown'
+      ) {
+        e.preventDefault();
+        const delta =
+          e.key === 'ArrowLeft'
+            ? -1
+            : e.key === 'ArrowRight'
+            ? 1
+            : e.key === 'ArrowUp'
+            ? -7
+            : 7;
+
+        const base = new Date((focusedDateStr || todayStr) + 'T12:00:00');
+        base.setDate(base.getDate() + delta);
+        const nextStr = base.toLocaleDateString('en-CA');
+        setFocusedDateStr(nextStr);
+        setCurrentDate(base);
+      } else if (e.key === 'Enter' && focusedDateStr && !selectedDrawerDate) {
+        e.preventDefault();
+        const dayTasks = visibleTasks.filter((t) => t.dueDate === focusedDateStr);
+        if (dayTasks.length === 0) {
+          onOpenNewTaskForDate(focusedDateStr);
+        } else {
+          setSelectedDrawerDate(new Date(focusedDateStr + 'T12:00:00'));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   // "Show completed" toggle (on by default, remembered in localStorage)
   const [showCompleted, setShowCompleted] = useState<boolean>(() => {
@@ -55,10 +126,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     const dueMs = new Date(`${t.dueDate}T${t.dueTime || '23:59'}`).getTime();
     if (dueMs < nowMs) {
-      // Overdue -> Red chip
+      // Overdue -> Red chip with gentle 1x pulse on load
       return isWeekCard
-        ? 'border-l-4 border-l-rose-500 border-rose-200 bg-rose-50/60 text-rose-950 dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200'
-        : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/50 dark:text-rose-200 dark:border-rose-800/70';
+        ? 'border-l-4 border-l-rose-500 orbit-overdue-pulse border-rose-200 bg-rose-50/60 text-rose-950 dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200'
+        : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/50 dark:text-rose-200 dark:border-rose-800/70 orbit-overdue-pulse';
     }
     if (dueMs <= next24hMs) {
       // Due soon -> Amber chip
@@ -92,8 +163,63 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setCurrentDate(d);
   };
 
-  // Real today string YYYY-MM-DD
-  const todayStr = new Date().toISOString().split('T')[0];
+  const jumpToToday = () => {
+    const now = new Date();
+    setCurrentDate(now);
+    setFocusedDateStr(now.toLocaleDateString('en-CA'));
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    e.stopPropagation();
+    setDraggedTaskId(task.id);
+    setHoveredDateStr(null);
+    e.dataTransfer.setData('text/plain', task.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, dateStr: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverDateStr !== dateStr) {
+      setDragOverDateStr(dateStr);
+    }
+  };
+
+  const handleDropOnDay = async (e: React.DragEvent, targetDateStr: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+    setDraggedTaskId(null);
+    setDragOverDateStr(null);
+
+    if (!taskId) return;
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.dueDate === targetDateStr) return;
+
+    const previousDueDate = task.dueDate;
+    await updateTask(task.id, { dueDate: targetDateStr });
+
+    const formattedTarget = new Date(targetDateStr + 'T12:00:00').toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    showToast(`Moved "${task.title}" to ${formattedTarget}`, 'success', () => {
+      updateTask(task.id, { dueDate: previousDueDate });
+    });
+  };
+
+  // Tapping an empty day opens the New task form with that date filled in;
+  // tapping a day with tasks opens the Day Drawer.
+  const handleDayCellClick = (date: Date, dateStr: string, dayTasksCount: number) => {
+    setFocusedDateStr(dateStr);
+    if (dayTasksCount === 0) {
+      onOpenNewTaskForDate(dateStr);
+    } else {
+      setSelectedDrawerDate(date);
+    }
+  };
 
   // Generate Month Grid Dates respecting weekStart (Monday or Sunday)
   const generateMonthDates = () => {
@@ -160,7 +286,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 pt-2.5 sm:pt-3 pb-16 md:pb-4 h-[calc(100dvh-114px)] min-h-[440px] flex flex-col">
+    <div className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 pt-2.5 sm:pt-3 pb-16 md:pb-4 h-[calc(100dvh-114px)] min-h-[440px] flex flex-col orbit-view-fade">
       {/* Compact Calendar Control Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2.5 mb-2">
         <div className="flex items-center gap-3">
@@ -169,6 +295,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
               : 'Weekly Schedule'}
           </h2>
+          <button
+            type="button"
+            onClick={jumpToToday}
+            title="Jump to Today (Shortcut: T)"
+            className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer transition-colors"
+          >
+            Today
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -210,8 +344,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
       </div>
 
-      {/* Self-Contained Calendar Frame */}
-      <div className="flex-1 min-h-0 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+      {/* Self-Contained Calendar Frame with Cross-Fade between Month and Week */}
+      <div
+        key={currentView}
+        className="flex-1 min-h-0 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs orbit-view-fade"
+      >
         {/* Weekday column headers */}
         <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/80 text-center py-1.5 text-[11px] font-semibold text-slate-500 dark:text-[#A0A0B0] shrink-0">
           {weekDayLabels.map((day) => (
@@ -225,18 +362,38 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         {currentView === 'month' && (
           <div className="flex-1 min-h-0 grid grid-cols-7 auto-rows-fr bg-white dark:bg-slate-900">
             {monthDates.map(({ date, isCurrentMonth }, idx) => {
-              const dateStr = date.toISOString().split('T')[0];
+              const dateStr = date.toLocaleDateString('en-CA');
               const isToday = dateStr === todayStr;
+              const isFocused = dateStr === focusedDateStr;
+              const isDropTarget = dragOverDateStr === dateStr;
               const dayTasks = visibleTasks.filter((t) => t.dueDate === dateStr);
+              const isHovered = hoveredDateStr === dateStr && dayTasks.length > 0 && !draggedTaskId;
 
               return (
                 <div
                   key={idx}
-                  onClick={() => setSelectedDrawerDate(date)}
-                  className={`min-h-0 p-1.5 sm:p-2 border-b border-r last:border-r-0 border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between transition-colors cursor-pointer group overflow-hidden ${
+                  onClick={() => handleDayCellClick(date, dateStr, dayTasks.length)}
+                  onMouseEnter={() => setHoveredDateStr(dateStr)}
+                  onMouseLeave={() => setHoveredDateStr((prev) => (prev === dateStr ? null : prev))}
+                  onDragOver={(e) => handleDragOver(e, dateStr)}
+                  onDragLeave={() =>
+                    setDragOverDateStr((prev) => (prev === dateStr ? null : prev))
+                  }
+                  onDrop={(e) => handleDropOnDay(e, dateStr)}
+                  aria-label={`${date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}, ${dayTasks.length} tasks`}
+                  className={`relative min-h-0 p-1.5 sm:p-2 border-b border-r last:border-r-0 border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between transition-all duration-150 cursor-pointer group ${
+                    isDropTarget
+                      ? 'ring-2 ring-inset ring-[var(--orbit-accent,#534AB7)] bg-indigo-50/80 dark:bg-[#534AB7]/25'
+                      : isFocused
+                      ? 'ring-1 ring-inset ring-[var(--orbit-accent,#534AB7)]/50 dark:ring-[#8B7BFF]/50'
+                      : ''
+                  } ${
                     isCurrentMonth
                       ? 'bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-850/80'
-                      : 'bg-slate-50/40 dark:bg-slate-950/40 opacity-40 hover:opacity-75'
+                      : 'bg-slate-50/40 dark:bg-slate-950/40 opacity-45 hover:opacity-80'
                   }`}
                 >
                   {/* Date Number Header */}
@@ -258,16 +415,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     )}
                   </div>
 
-                  {/* Task preview items with time */}
+                  {/* Draggable Task preview items with time */}
                   <div className="flex-1 min-h-0 space-y-0.5 overflow-hidden">
                     {dayTasks.slice(0, 2).map((t) => (
                       <div
                         key={t.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, t)}
+                        onDragEnd={() => {
+                          setDraggedTaskId(null);
+                          setDragOverDateStr(null);
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedTaskForDetail(t);
                         }}
-                        className={`text-[10px] truncate px-1.5 py-0.5 rounded border leading-tight flex items-center gap-1 hover:opacity-90 ${getChipColorClasses(
+                        className={`text-[10px] truncate px-1.5 py-0.5 rounded border leading-tight flex items-center gap-1 hover:opacity-90 cursor-grab active:cursor-grabbing ${getChipColorClasses(
                           t,
                           false
                         )}`}
@@ -284,6 +447,36 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Desktop Hover Preview Tooltip */}
+                  {isHovered && (
+                    <div
+                      role="tooltip"
+                      className="hidden md:block pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-40 w-52 p-2.5 rounded-xl bg-slate-900/95 dark:bg-[#1E1E26] text-white border border-slate-700 shadow-xl space-y-1.5 orbit-view-fade"
+                    >
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>
+                          {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span>{dayTasks.length} due</span>
+                      </div>
+                      <div className="space-y-1">
+                        {dayTasks.slice(0, 4).map((t) => (
+                          <div key={t.id} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="truncate font-medium">{t.title}</span>
+                            <span className="font-mono text-[10px] text-slate-300 shrink-0">
+                              {formatTimeDisplay(t.dueTime, timeFormat)}
+                            </span>
+                          </div>
+                        ))}
+                        {dayTasks.length > 4 && (
+                          <div className="text-[10px] text-slate-400">
+                            +{dayTasks.length - 4} more...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -294,15 +487,28 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         {currentView === 'week' && (
           <div className="flex-1 min-h-0 grid grid-cols-7 bg-white dark:bg-slate-900">
             {weekDates.map((date, idx) => {
-              const dateStr = date.toISOString().split('T')[0];
+              const dateStr = date.toLocaleDateString('en-CA');
               const isToday = dateStr === todayStr;
+              const isFocused = dateStr === focusedDateStr;
+              const isDropTarget = dragOverDateStr === dateStr;
               const dayTasks = visibleTasks.filter((t) => t.dueDate === dateStr);
 
               return (
                 <div
                   key={idx}
-                  onClick={() => setSelectedDrawerDate(date)}
-                  className="min-h-0 p-2 border-r last:border-r-0 border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-start hover:bg-slate-50/80 dark:hover:bg-slate-850/80 transition-colors cursor-pointer group overflow-hidden"
+                  onClick={() => handleDayCellClick(date, dateStr, dayTasks.length)}
+                  onDragOver={(e) => handleDragOver(e, dateStr)}
+                  onDragLeave={() =>
+                    setDragOverDateStr((prev) => (prev === dateStr ? null : prev))
+                  }
+                  onDrop={(e) => handleDropOnDay(e, dateStr)}
+                  className={`min-h-0 p-2 border-r last:border-r-0 border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-start hover:bg-slate-50/80 dark:hover:bg-slate-850/80 transition-all duration-150 cursor-pointer group overflow-hidden ${
+                    isDropTarget
+                      ? 'ring-2 ring-inset ring-[var(--orbit-accent,#534AB7)] bg-indigo-50/80 dark:bg-[#534AB7]/25'
+                      : isFocused
+                      ? 'ring-1 ring-inset ring-[var(--orbit-accent,#534AB7)]/50 dark:ring-[#8B7BFF]/50'
+                      : ''
+                  }`}
                 >
                   {/* Date header */}
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
@@ -320,22 +526,29 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Day Tasks in Column */}
+                  {/* Draggable Day Tasks in Column */}
                   <div className="space-y-1.5 flex-1 min-h-0 overflow-y-auto pr-0.5">
                     {dayTasks.map((t) => (
                       <div
                         key={t.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, t)}
+                        onDragEnd={() => {
+                          setDraggedTaskId(null);
+                          setDragOverDateStr(null);
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedTaskForDetail(t);
                         }}
-                        className={`p-1.5 sm:p-2 rounded-lg border text-xs leading-snug hover:border-[#534AB7] dark:hover:border-[#8B7BFF] transition-colors ${getChipColorClasses(
+                        className={`p-1.5 sm:p-2 rounded-lg border text-xs leading-snug hover:border-[#534AB7] dark:hover:border-[#8B7BFF] transition-colors cursor-grab active:cursor-grabbing ${getChipColorClasses(
                           t,
                           true
                         )}`}
                       >
                         <div className="flex items-center justify-between text-[10px] font-mono opacity-80 mb-0.5">
                           <span className="flex items-center gap-1">
+                            <GripVertical className="h-3 w-3 opacity-50 shrink-0 hidden sm:inline" />
                             <Clock className="h-3 w-3 stroke-current" strokeWidth={2} />
                             <span>{formatTimeDisplay(t.dueTime, timeFormat)}</span>
                           </span>

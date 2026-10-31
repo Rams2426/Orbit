@@ -466,25 +466,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {renderSidebarContent(isCollapsed, false)}
       </aside>
 
-      {/* Mobile Slide-Over Sidebar Drawer (below md) */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          {/* Dimmed Backdrop */}
-          <div
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
-            onClick={onCloseMobile}
-            aria-hidden="true"
-          />
+      {/* Mobile Slide-Over Sidebar Drawer (below md) — slides in and out < 300ms */}
+      <div
+        className={`fixed inset-0 z-50 md:hidden flex transition-opacity duration-200 ease-out ${
+          isMobileOpen
+            ? 'opacity-100 pointer-events-auto'
+            : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden={!isMobileOpen}
+      >
+        {/* Dimmed Backdrop */}
+        <div
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
 
-          {/* Slide-in Sidebar Panel */}
-          <aside
-            aria-label="Mobile navigation drawer"
-            className="relative z-10 w-72 max-w-[85vw] h-full bg-slate-100 dark:bg-[#14141A] border-r border-slate-200 dark:border-slate-800 shadow-2xl animate-in slide-in-from-left duration-200"
-          >
-            {renderSidebarContent(false, true)}
-          </aside>
-        </div>
-      )}
+        {/* Slide-in / Slide-out Sidebar Panel */}
+        <aside
+          aria-label="Mobile navigation drawer"
+          className={`relative z-10 w-72 max-w-[85vw] h-full bg-slate-100 dark:bg-[#14141A] border-r border-slate-200 dark:border-slate-800 shadow-2xl transition-transform duration-200 ease-out ${
+            isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          {renderSidebarContent(false, true)}
+        </aside>
+      </div>
     </>
   );
 };

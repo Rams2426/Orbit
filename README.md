@@ -4,55 +4,54 @@ Orbit is a modern workspace application for managing tasks, schedules, and team 
 
 ---
 
-## Deploying to Vercel via GitHub (Step-by-Step)
+## Free Hosting Options (No Phone Number Required)
 
-This project is pre-configured for **zero-config Vercel deployment** via `vercel.json` (including Vite build settings and SPA routing rewrites).
-
-### Step 1: Push to GitHub from AI Studio
-1. Click the **Export / Save to GitHub** (GitHub icon) button in the top-right toolbar of Google AI Studio.
-2. Connect your GitHub account if prompted.
-3. Enter a repository name (for example, `orbit-workspace`) and click **Create & Push**.
-
-### Step 2: Import into Vercel
-1. Go to [vercel.com/new](https://vercel.com/new) and sign in with your GitHub account.
-2. Find your newly created `orbit-workspace` repository and click **Import**.
-3. Vercel will automatically detect **Vite** (`npm run build`, output directory `dist`) from `vercel.json`.
-4. Click **Deploy**. Wait ~45 seconds for Vercel to give you your live `.vercel.app` URL (e.g., `https://orbit-workspace.vercel.app`).
-
-### Step 3: Authorize Your Vercel Domain in Firebase (Required for Google Sign-In)
-Because Orbit uses **Firebase Google Sign-In**, Firebase blocks sign-in popups from unknown domains until you whitelist your Vercel domain:
-1. Open the [Firebase Console — Authentication Settings](https://console.firebase.google.com/project/gen-lang-client-0418095004/authentication/settings).
-2. Click the **Authorized domains** tab.
-3. Click **Add domain** and paste your Vercel domain (e.g. `orbit-workspace.vercel.app` — without `https://`).
-4. Click **Add**. Google Sign-In and real-time team sync will immediately work on your live Vercel site!
+### Option 1: GitHub Pages (Easiest — Built into GitHub, No New Account Needed)
+Since your code is on GitHub, you can host it directly on **GitHub Pages** without signing up for any third-party service:
+1. Push this project to GitHub using the **GitHub icon** in the top toolbar of AI Studio.
+2. Open your repository on GitHub and click **Settings** → **Pages** (in the left sidebar).
+3. Under **Build and deployment** → **Source**, change the dropdown from `Deploy from a branch` to **GitHub Actions**.
+4. Go to the **Actions** tab, select **Deploy to GitHub Pages**, and click **Run workflow** (or push a commit to `main`).
+5. Your app will be live at `https://<your-username>.github.io/<repo-name>/`!
+6. Add `<your-username>.github.io` to [Firebase Authorized Domains](https://console.firebase.google.com/project/gen-lang-client-0418095004/authentication/settings).
 
 ---
 
-## Features
-
-- **Workspace Dashboard**: Real-time overview of progress, upcoming deadlines, urgent priorities, and completion metrics.
-- **Interactive Calendar**: Month view with task indicators, quick-add per date, and filtering.
-- **Task Management**: Priorities, due dates, subtasks, notes, and role-tailored task types (Designer & Student workflows).
-- **Team Collaboration**: Create or join teams via shareable invite links or scannable QR codes, assign tasks to team members, and track team progress in real time.
-- **Collapsible Sidebar & Theme Support**: Responsive desktop/mobile navigation with Light, Dark, and System theme modes.
+### Option 2: Cloudflare Pages (Fastest Global CDN — No Phone Number Required)
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com/sign-up) (only requires email & password — no phone number).
+2. In the left sidebar, click **Compute (Workers & Pages)** → **Create** → **Pages** → **Connect to Git**.
+3. Select your GitHub repository.
+4. Set **Framework preset** to `Vite` (`npm run build`, output directory `dist`) and click **Save and Deploy**.
+5. Add your `.pages.dev` domain to [Firebase Authorized Domains](https://console.firebase.google.com/project/gen-lang-client-0418095004/authentication/settings).
 
 ---
 
-## Local Development
+### Option 3: Render Static Sites (Sign in with GitHub — No Phone Number Required)
+1. Go to [dashboard.render.com](https://dashboard.render.com/register) and click **Sign in with GitHub**.
+2. Click **New +** → **Static Site** and select your repository.
+3. Set:
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `dist`
+4. Click **Create Static Site**.
+5. Add your `.onrender.com` domain to [Firebase Authorized Domains](https://console.firebase.google.com/project/gen-lang-client-0418095004/authentication/settings).
 
-### Prerequisites
-- **Node.js** 18+ and **npm**
+---
 
-### Setup
-1. Clone your repository and install dependencies:
+### Option 4: Firebase Hosting (Uses Your Existing Google Account)
+Since your database is already on Firebase, you can host on Firebase Hosting (`gen-lang-client-0418095004.web.app` is already pre-authorized for Google Sign-In!):
+1. Open your repo in **GitHub Codespaces** (click the green **Code** button on GitHub → **Codespaces** → **Create codespace on main**).
+2. Run in the Codespaces terminal:
    ```bash
    npm install
-   ```
-2. Start the development server (runs on port `3000`):
-   ```bash
-   npm run dev
-   ```
-3. Build for production:
-   ```bash
    npm run build
+   npx firebase-tools login --no-localhost
+   npx firebase-tools deploy --only hosting
    ```
+
+---
+
+## Important: Authorize Your Hosting Domain in Firebase
+
+Whenever you deploy to a new domain (`<username>.github.io`, `*.pages.dev`, `*.onrender.com`, etc.), add it to Firebase so Google Sign-In works:
+1. Open [Firebase Console → Authentication → Settings → Authorized domains](https://console.firebase.google.com/project/gen-lang-client-0418095004/authentication/settings).
+2. Click **Add domain** and enter your domain (e.g., `your-username.github.io` — without `https://` or path).

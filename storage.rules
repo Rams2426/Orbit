@@ -1,0 +1,84 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Default deny all paths unless explicitly matched below
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Helper: User is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: Validate sanitized file name (no path traversal, reasonable length)
+    function isValidFileName(fileName) {
+      return fileName.size() > 0
+        && fileName.size() <= 140
+        && fileName.matches('^[a-zA-Z0-9._\\-]+$');
+    }
+
+    // Helper: Enforce 10 MB maximum file size and allowed MIME types
+    // Allowed: JPG, PNG, WebP, PDF, DOCX, XLSX, PPTX, TXT
+    function isValidAttachmentUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && (
+          request.resource.contentType == 'image/jpeg' ||
+          request.resource.contentType == 'image/png' ||
+          request.resource.contentType == 'image/webp' ||
+          request.resource.contentType == 'application/pdf' ||
+          request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          request.resource.contentType == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+          request.resource.contentType == 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+          request.resource.contentType == 'text/plain'
+        );
+    }
+
+    // Helper: Team membership and role lookups in Firestore
+    function isTeamMember(teamId) {
+      return isSignedIn() && (
+        firestore.exists(/databases/(default)/documents/teams/$(teamId)/members/$(request.auth.uid)) ||
+        firestore.get(/databases/(default)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid
+      );
+    }
+
+    function isTeamOwnerOrAdmin(teamId) {
+      return isSignedIn() && (
+        firestore.get(/databases/(default)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid ||
+        (
+          firestore.exists(/databases/(default)/documents/teams/$(teamId)/members/$(request.auth.uid)) &&
+          firestore.get(/databases/(default)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['owner', 'admin']
+        )
+      );
+    }
+
+    // 1. Personal Task Attachments: users/{userId}/tasks/{taskId}/{fileName}
+    // Only the task owner can upload, read, and delete files in their folder.
+    match /users/{userId}/tasks/{taskId}/{fileName} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn()
+                            && request.auth.uid == userId
+                            && isValidFileName(fileName)
+                            && isValidAttachmentUpload()
+                            && request.resource.metadata.uploadedBy == request.auth.uid;
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 2. Team Task Attachments: teams/{teamId}/tasks/{taskId}/{fileName}
+    // Only members of that team can read and upload; only the uploader, admin, or owner can delete.
+    match /teams/{teamId}/tasks/{taskId}/{fileName} {
+      allow read: if isTeamMember(teamId);
+      allow create, update: if isTeamMember(teamId)
+                            && isValidFileName(fileName)
+                            && isValidAttachmentUpload()
+                            && request.resource.metadata.uploadedBy == request.auth.uid;
+      allow delete: if isTeamMember(teamId) && (
+        (resource.metadata != null && resource.metadata.uploadedBy == request.auth.uid) ||
+        isTeamOwnerOrAdmin(teamId)
+      );
+    }
+  }
+}

@@ -1,14 +1,23 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useOrbit } from '../context/OrbitContext';
-import { Task, TaskStatus, TaskAttachment, TaskComment, TaskActivity } from '../types/orbit';
+import { Task, TaskStatus, TaskAttachment, TaskActivity } from '../types/orbit';
 import { formatTimeDisplay } from '../utils/timeFormat';
+import {
+  MAX_ATTACHMENTS_PER_TASK,
+  FILE_INPUT_ACCEPT,
+  validateAttachmentFile,
+  uploadTaskFileToStorage,
+  validateExternalLink,
+  isImageAttachment,
+  isLinkAttachment,
+  formatFileSize,
+} from '../utils/attachments';
 import {
   X,
   Calendar,
   Clock,
   CheckCircle2,
   Circle,
-  Paperclip,
   Download,
   Copy,
   Trash2,
@@ -17,11 +26,11 @@ import {
   Upload,
   Check,
   AlertCircle,
-  File,
-  MessageSquare,
+  File as FileIcon,
   Activity as ActivityIcon,
-  BookOpen,
-  Sparkles,
+  Link as LinkIcon,
+  ExternalLink,
+  ZoomIn,
 } from 'lucide-react';
 
 interface TaskDetailModalProps {
@@ -68,18 +77,56 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   // Delete Confirmation Dialog
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // File upload input ref
+  // Attachment Upload & Link states
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingFiles, setUploadingFiles] = useState<
+    { id: string; name: string; size: number; progress: number }[]
+  >([]);
+  const [attachmentNotice, setAttachmentNotice] = useState<{
+    type: 'error' | 'success';
+    text: string;
+  } | null>(null);
+  const [showAddLinkBox, setShowAddLinkBox] = useState(false);
+  const [linkUrlInput, setLinkUrlInput] = useState('');
+  const [linkLabelInput, setLinkLabelInput] = useState('');
+
+  // Full-size Image Lightbox state
+  const [lightboxAttachment, setLightboxAttachment] = useState<TaskAttachment | null>(null);
+
+  // Mobile swipe-down to close
+  const touchStartYRef = useRef<number | null>(null);
+  const [swipeOffsetY, setSwipeOffsetY] = useState(0);
 
   // Initialize values when task changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (task) {
       setNewDueDate(task.dueDate);
       setNewDueTime(task.dueTime || '17:00');
       setBriefText(task.brief || '');
       setCaptionText(task.caption || '');
+      setAttachmentNotice(null);
+      setShowAddLinkBox(false);
+      setSwipeOffsetY(0);
     }
-  }, [task]);
+  }, [task?.id]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!task) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (lightboxAttachment) {
+          setLightboxAttachment(null);
+        } else if (showDeleteConfirm) {
+          setShowDeleteConfirm(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [task, lightboxAttachment, showDeleteConfirm, onClose]);
 
   if (!task) return null;
 
@@ -89,7 +136,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const canDelete = isTeamTask
     ? userTeamRole === 'owner' || userTeamRole === 'admin' || task.createdBy === currentUser?.uid
     : task.createdBy === currentUser?.uid || task.userId === currentUser?.uid;
-  const canEdit = canDelete;
+
+  const canRemoveAttachment = (att: TaskAttachment) => {
+    if (!isTeamTask) return task.userId === currentUser?.uid || task.createdBy === currentUser?.uid;
+    return (
+      userTeamRole === 'owner' ||
+      userTeamRole === 'admin' ||
+      att.uploadedByUid === currentUser?.uid ||
+      task.createdBy === currentUser?.uid
+    );
+  };
 
   // Deadline calculation
   const now = Date.now();
@@ -98,40 +154,40 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const isDueSoon = task.status !== 'done' && !isOverdue && dueTimestamp - now <= 24 * 60 * 60 * 1000;
 
   const deadlineStatus = task.status === 'done' ? (
-    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
       Done
     </span>
   ) : isOverdue ? (
-    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+    <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
       Overdue
     </span>
   ) : isDueSoon ? (
-    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
       Due soon
     </span>
   ) : (
-    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
       On track
     </span>
   );
 
-  // Priority Chip Styling
-  const priorityChip = {
+  // Priority label styling
+  const priorityLabel = {
     urgent: {
-      label: 'Urgent',
-      className: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+      label: 'Urgent priority',
+      className: 'text-rose-600 dark:text-rose-400 font-semibold',
     },
     high: {
-      label: 'High',
-      className: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+      label: 'High priority',
+      className: 'text-amber-600 dark:text-amber-400 font-semibold',
     },
     medium: {
-      label: 'Medium',
-      className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+      label: 'Medium priority',
+      className: 'text-slate-600 dark:text-slate-300 font-medium',
     },
     low: {
-      label: 'Low',
-      className: 'bg-slate-50 text-slate-500 dark:bg-slate-850 dark:text-slate-400',
+      label: 'Low priority',
+      className: 'text-slate-500 dark:text-slate-400 font-medium',
     },
   }[task.priority || 'medium'];
 
@@ -175,39 +231,123 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setIsEditingDeadline(false);
   };
 
-  // Handle File Upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handle File Upload to Firebase Storage
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0 || !currentUser) return;
 
-    // 700KB limit for Firestore document storage safety
-    if (file.size > 700 * 1024) {
-      showToast('File size exceeds the 700KB attachment limit.', 'error');
-      return;
-    }
-
-    // Allowed types: images, pdf, common docs
-    const allowed = ['image/', 'application/pdf', 'text/', 'application/msword', 'application/vnd.openxmlformats-officedocument'];
-    const isAllowed = allowed.some((prefix) => file.type.startsWith(prefix) || file.type.includes('pdf') || file.type.includes('document'));
-
-    if (!isAllowed) {
-      showToast('File type not allowed. Please upload an image, PDF, or document.', 'error');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const url = reader.result as string;
-      await addAttachmentToTask(task.id, {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url,
-      });
-      showToast(`Attached ${file.name}`, 'success');
-    };
-    reader.readAsDataURL(file);
+    const files = Array.from(fileList);
     e.target.value = '';
+    setAttachmentNotice(null);
+
+    const existingCount = (task.attachments || []).length + uploadingFiles.length;
+    if (existingCount + files.length > MAX_ATTACHMENTS_PER_TASK) {
+      const msg = `You can attach up to ${MAX_ATTACHMENTS_PER_TASK} files per task (${existingCount}/${MAX_ATTACHMENTS_PER_TASK} used).`;
+      setAttachmentNotice({ type: 'error', text: msg });
+      showToast(msg, 'error');
+      return;
+    }
+
+    for (const file of files) {
+      const check = validateAttachmentFile(file);
+      if (!check.valid) {
+        const msg = check.error || 'Unsupported file type or size.';
+        setAttachmentNotice({ type: 'error', text: msg });
+        showToast(msg, 'error');
+        continue;
+      }
+
+      const tempId = `up_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      setUploadingFiles((prev) => [
+        ...prev,
+        { id: tempId, name: file.name, size: file.size, progress: 5 },
+      ]);
+
+      try {
+        const uploaded = await uploadTaskFileToStorage({
+          file,
+          userId: currentUser.uid,
+          userDisplayName: currentUser.displayName || currentUser.email || 'User',
+          taskId: task.id,
+          teamId: task.teamId || null,
+          onProgress: (pct) => {
+            setUploadingFiles((prev) =>
+              prev.map((u) => (u.id === tempId ? { ...u, progress: Math.max(5, pct) } : u))
+            );
+          },
+        });
+
+        await addAttachmentToTask(task.id, {
+          name: uploaded.name,
+          url: uploaded.url,
+          size: uploaded.size,
+          type: uploaded.type,
+          storagePath: uploaded.storagePath,
+          isLink: false,
+          uploadedByUid: currentUser.uid,
+        });
+
+        setAttachmentNotice({
+          type: 'success',
+          text: `Attached "${uploaded.name}"`,
+        });
+      } catch (err: any) {
+        console.error('Upload failed:', err);
+        const msg = err?.message || `Failed to upload "${file.name}".`;
+        setAttachmentNotice({ type: 'error', text: msg });
+        showToast(msg, 'error');
+      } finally {
+        setUploadingFiles((prev) => prev.filter((u) => u.id !== tempId));
+      }
+    }
+  };
+
+  // Handle adding a Link in Task Detail
+  const handleAddExternalLink = async () => {
+    setAttachmentNotice(null);
+    const existingCount = (task.attachments || []).length + uploadingFiles.length;
+    if (existingCount >= MAX_ATTACHMENTS_PER_TASK) {
+      setAttachmentNotice({
+        type: 'error',
+        text: `Maximum ${MAX_ATTACHMENTS_PER_TASK} attachments allowed per task.`,
+      });
+      return;
+    }
+
+    const validation = validateExternalLink(linkUrlInput);
+    if (!validation.valid || !validation.url) {
+      setAttachmentNotice({
+        type: 'error',
+        text: validation.error || 'Please enter a valid URL.',
+      });
+      return;
+    }
+
+    let hostnameLabel = validation.url;
+    try {
+      const u = new URL(validation.url);
+      hostnameLabel = u.hostname.replace(/^www\./, '');
+    } catch {
+      // keep raw
+    }
+
+    const cleanLabel = linkLabelInput.trim() || hostnameLabel;
+    await addAttachmentToTask(task.id, {
+      name: cleanLabel.slice(0, 120),
+      url: validation.url,
+      size: 0,
+      type: 'link',
+      isLink: true,
+      uploadedByUid: currentUser?.uid,
+    });
+
+    setLinkUrlInput('');
+    setLinkLabelInput('');
+    setShowAddLinkBox(false);
+    setAttachmentNotice({
+      type: 'success',
+      text: `Added link "${cleanLabel}"`,
+    });
   };
 
   // Handle Add Comment
@@ -245,14 +385,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     onClose();
   };
 
-  // Standard steps
   const standardSteps: { id: TaskStatus; label: string }[] = [
     { id: 'todo', label: 'To do' },
     { id: 'in_progress', label: 'In progress' },
     { id: 'done', label: 'Done' },
   ];
 
-  // Review steps (if linked)
   const reviewSteps: { id: TaskStatus; label: string }[] = [
     { id: 'submitted', label: 'Submitted for review' },
     { id: 'changes_requested', label: 'Changes requested' },
@@ -261,34 +399,72 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const currentStatus = task.status === 'pending' ? 'todo' : task.status;
 
+  const allAttachments = task.attachments || [];
+  const imageAttachments = allAttachments.filter((att) => isImageAttachment(att));
+  const documentAndLinkAttachments = allAttachments.filter((att) => !isImageAttachment(att));
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="task-detail-title"
+    >
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-2xs transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal Card (Full screen on mobile, max-w-2xl modal on desktop) */}
-      <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl bg-white dark:bg-[#16161D] sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+      {/* Modal Card */}
+      <div
+        style={swipeOffsetY > 0 ? { transform: `translateY(${swipeOffsetY}px)` } : undefined}
+        onTouchStart={(e) => {
+          touchStartYRef.current = e.touches[0].clientY;
+        }}
+        onTouchMove={(e) => {
+          if (touchStartYRef.current === null) return;
+          const deltaY = e.touches[0].clientY - touchStartYRef.current;
+          if (deltaY > 0 && deltaY < 220) {
+            setSwipeOffsetY(deltaY);
+          }
+        }}
+        onTouchEnd={() => {
+          if (swipeOffsetY > 90) {
+            onClose();
+          } else {
+            setSwipeOffsetY(0);
+          }
+          touchStartYRef.current = null;
+        }}
+        className="orbit-modal-enter relative w-full h-[94dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-2xl bg-white dark:bg-[#16161D] rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col z-10 overflow-hidden"
+      >
+        {/* Mobile Swipe Handle */}
+        <div className="sm:hidden flex justify-center pt-2 pb-0.5 bg-slate-50/50 dark:bg-[#1B1B24]">
+          <div className="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-700" />
+        </div>
+
         {/* HEADER */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800/80 shrink-0 space-y-3 bg-slate-50/50 dark:bg-[#1B1B24]">
-          {/* Top row: Brand chip, content type label, priority chip, Close X */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800/80 shrink-0 space-y-2.5 bg-slate-50/50 dark:bg-[#1B1B24]">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center flex-wrap gap-2">
+            <div className="flex items-center flex-wrap gap-2 text-xs text-slate-500 dark:text-[#A0A0B0]">
               {task.brand && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#534AB7]/25 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]">
-                  {task.brand}
-                </span>
+                <>
+                  <span className="font-semibold text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]">
+                    {task.brand}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                </>
               )}
               {task.contentType && (
-                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-[#A0A0B0]">
-                  {task.contentType}
-                </span>
+                <>
+                  <span className="font-semibold uppercase tracking-wider text-[11px]">
+                    {task.contentType}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                </>
               )}
-              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${priorityChip.className}`}>
-                {priorityChip.label}
-              </span>
+              <span className={priorityLabel.className}>{priorityLabel.label}</span>
             </div>
 
             <button
@@ -301,21 +477,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </button>
           </div>
 
-          {/* Large Title */}
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F2F2F7] leading-tight">
+          <h1
+            id="task-detail-title"
+            className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F2F2F7] leading-tight"
+          >
             {task.title}
           </h1>
 
           {/* Deadline Line */}
-          <div className="flex items-center flex-wrap gap-3 text-xs text-slate-600 dark:text-[#A0A0B0] pt-1">
+          <div className="flex items-center flex-wrap gap-2.5 text-xs text-slate-600 dark:text-[#A0A0B0] pt-1">
             <div className="flex items-center gap-1.5 font-medium">
               <Calendar className="h-4 w-4 stroke-current text-slate-400 dark:text-[#A0A0B0]" strokeWidth={2} />
               <span>{task.dueDate}</span>
             </div>
-            <div className="flex items-center gap-1.5 font-mono">
+            <span aria-hidden="true">·</span>
+            <div className="flex items-center gap-1.5 font-sans tabular-nums">
               <Clock className="h-4 w-4 stroke-current text-slate-400 dark:text-[#A0A0B0]" strokeWidth={2} />
               <span>{formatTimeDisplay(task.dueTime || '17:00', timeFormat)}</span>
             </div>
+            <span aria-hidden="true">·</span>
             {deadlineStatus}
 
             <button
@@ -326,9 +506,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </button>
           </div>
 
-          {/* Inline Change Deadline Picker */}
           {isEditingDeadline && (
-            <div className="mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-3 animate-in fade-in duration-150">
+            <div className="mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-3 orbit-task-enter">
               <div className="flex items-center gap-2">
                 <input
                   type="date"
@@ -363,13 +542,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           )}
         </div>
 
-        {/* STATUS BAR: 3 steps (To do, In progress, Done) + optional Review steps */}
+        {/* STATUS BAR */}
         <div className="px-4 sm:px-6 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#16161D] shrink-0">
           <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
             Status
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {standardSteps.map((step, idx) => {
+            {standardSteps.map((step) => {
               const isCurrent = currentStatus === step.id;
               const isDoneStep = currentStatus === 'done' || (currentStatus === 'in_progress' && step.id === 'todo');
 
@@ -398,7 +577,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             })}
           </div>
 
-          {/* Review Steps: Only when user is linked with someone or in collaborative mode */}
           {isLinked && (
             <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
               <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
@@ -423,7 +601,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 })}
               </div>
 
-              {/* Linked Partner Review Buttons */}
               {role === 'boss' && (
                 <div className="mt-2.5 flex items-center gap-2">
                   <button
@@ -502,12 +679,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   : 'border-transparent text-slate-500 dark:text-[#A0A0B0] hover:text-slate-800 dark:hover:text-[#F2F2F7]'
               }`}
             >
-              <span>Comments</span>
-              {(task.comments?.length || 0) > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                  {task.comments?.length}
-                </span>
-              )}
+              <span>Comments ({task.comments?.length || 0})</span>
             </button>
 
             <button
@@ -523,11 +695,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
         </div>
 
-        {/* TAB CONTENTS (Scrollable) */}
+        {/* TAB CONTENTS */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-          {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
-            <div className="space-y-6">
+            <div className="space-y-6 orbit-view-fade">
               {/* Description */}
               <div>
                 <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
@@ -557,80 +728,305 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Attachments */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
+              {/* ATTACHMENTS SECTION */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Attachments ({(task.attachments?.length || 0)})
+                    Attachments ({allAttachments.length}/{MAX_ATTACHMENTS_PER_TASK})
                   </h4>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-semibold text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <Upload className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
-                    <span>Add attachment</span>
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddLinkBox((prev) => !prev)}
+                      disabled={allAttachments.length >= MAX_ATTACHMENTS_PER_TASK}
+                      className="min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                    >
+                      <LinkIcon className="h-3.5 w-3.5 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
+                      <span>Add a link</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={allAttachments.length >= MAX_ATTACHMENTS_PER_TASK}
+                      className="min-h-[34px] px-3 py-1 rounded-[8px] bg-[var(--orbit-accent,#534AB7)] text-white hover:bg-[var(--orbit-accent-hover,#433B9B)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                    >
+                      <Upload className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                      <span>Add attachment</span>
+                    </button>
+                  </div>
+
                   <input
                     ref={fileInputRef}
                     type="file"
+                    multiple
+                    accept={FILE_INPUT_ACCEPT}
                     className="hidden"
                     onChange={handleFileUpload}
                   />
                 </div>
 
-                {task.attachments && task.attachments.length > 0 ? (
-                  <div className="space-y-2">
-                    {task.attachments.map((att) => (
-                      <div
-                        key={att.id}
-                        className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50"
+                {/* Add Link Box */}
+                {showAddLinkBox && (
+                  <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 space-y-2 orbit-task-enter">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-[#F2F2F7]">
+                        Add external link (Google Drive, Dropbox, Figma, etc.)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddLinkBox(false)}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F2F2F7] cursor-pointer"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Paperclip className="h-4 w-4 stroke-current text-slate-400 dark:text-[#A0A0B0] shrink-0" strokeWidth={2} />
-                          <div className="truncate">
-                            <p className="text-xs font-semibold text-slate-900 dark:text-[#F2F2F7] truncate">
-                              {att.name}
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              {(att.size / 1024).toFixed(1)} KB · {att.uploadedBy}
-                            </p>
-                          </div>
-                        </div>
+                        <X className="h-4 w-4 stroke-current" strokeWidth={2} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="url"
+                        value={linkUrlInput}
+                        onChange={(e) => setLinkUrlInput(e.target.value)}
+                        placeholder="https://drive.google.com/..."
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-[#F2F2F7] focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={linkLabelInput}
+                        onChange={(e) => setLinkLabelInput(e.target.value)}
+                        placeholder="Label (optional)"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-[#F2F2F7] focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleAddExternalLink}
+                        className="min-h-[34px] px-3 py-1 rounded-lg bg-[var(--orbit-accent,#534AB7)] text-white text-xs font-semibold hover:bg-[var(--orbit-accent-hover,#433B9B)] cursor-pointer"
+                      >
+                        Save link
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <a
-                            href={att.url}
-                            download={att.name}
-                            className="min-h-[36px] px-3 py-1 text-xs font-semibold text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] hover:bg-slate-200 dark:hover:bg-[#24242E] rounded-lg transition-colors flex items-center gap-1"
-                          >
-                            <Download className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
-                            <span>Download</span>
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => deleteAttachmentFromTask(task.id, att.id)}
-                            className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-400 hover:text-rose-500 rounded-lg cursor-pointer"
-                            title="Remove file"
-                          >
-                            <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
-                          </button>
+                {/* Feedback banner */}
+                {attachmentNotice && (
+                  <div
+                    role="status"
+                    className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center justify-between gap-2 ${
+                      attachmentNotice.type === 'error'
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {attachmentNotice.type === 'error' ? (
+                        <AlertCircle className="h-4 w-4 shrink-0 stroke-current" strokeWidth={2} />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 stroke-current" strokeWidth={2} />
+                      )}
+                      <span className="truncate">{attachmentNotice.text}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAttachmentNotice(null)}
+                      className="shrink-0 opacity-75 hover:opacity-100 cursor-pointer"
+                      aria-label="Dismiss message"
+                    >
+                      <X className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Active Upload Progress Rows */}
+                {uploadingFiles.length > 0 && (
+                  <div className="space-y-2">
+                    {uploadingFiles.map((up) => (
+                      <div
+                        key={up.id}
+                        className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-slate-800 dark:text-[#F2F2F7] truncate">
+                            Uploading {up.name}...
+                          </span>
+                          <span className="text-[11px] text-slate-400 tabular-nums">
+                            {up.progress}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] transition-all duration-200"
+                            style={{ width: `${up.progress}%` }}
+                          />
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-                    No files attached yet. Upload images, briefs, or documents (max 5MB).
+                )}
+
+                {/* 1. Grid for Images (Tap to view full size) */}
+                {imageAttachments.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="block text-[11px] font-semibold text-slate-500 dark:text-[#A0A0B0]">
+                      Images ({imageAttachments.length})
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {imageAttachments.map((imgAtt) => (
+                        <div
+                          key={imgAtt.id}
+                          className="group relative rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-850 overflow-hidden shadow-2xs"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setLightboxAttachment(imgAtt)}
+                            className="w-full h-32 block relative overflow-hidden cursor-pointer focus:outline-none"
+                            aria-label={`View full size image ${imgAtt.name}`}
+                          >
+                            <img
+                              src={imgAtt.url}
+                              alt={imgAtt.name}
+                              loading="lazy"
+                              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/35 transition-colors flex items-center justify-center">
+                              <span className="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg bg-slate-900/80 text-white text-[11px] font-semibold flex items-center gap-1">
+                                <ZoomIn className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                                <span>View</span>
+                              </span>
+                            </div>
+                          </button>
+
+                          <div className="p-2 bg-white dark:bg-slate-900 flex items-center justify-between gap-1.5 border-t border-slate-100 dark:border-slate-800">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-semibold text-slate-800 dark:text-[#F2F2F7] truncate">
+                                {imgAtt.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400 tabular-nums">
+                                {formatFileSize(imgAtt.size)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <a
+                                href={imgAtt.url}
+                                download={imgAtt.name}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Download ${imgAtt.name}`}
+                                title="Download image"
+                                className="min-w-[32px] min-h-[32px] h-8 w-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-[var(--orbit-accent,#534AB7)] dark:hover:text-[#8B7BFF] hover:bg-slate-100 dark:hover:bg-[#24242E]"
+                              >
+                                <Download className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                              </a>
+                              {canRemoveAttachment(imgAtt) && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteAttachmentFromTask(task.id, imgAtt.id)}
+                                  aria-label={`Remove ${imgAtt.name}`}
+                                  title="Remove image"
+                                  className="min-w-[32px] min-h-[32px] h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. List for Documents & Links with Download and Remove buttons */}
+                {documentAndLinkAttachments.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="block text-[11px] font-semibold text-slate-500 dark:text-[#A0A0B0]">
+                      Documents & Links ({documentAndLinkAttachments.length})
+                    </span>
+                    <div className="space-y-2">
+                      {documentAndLinkAttachments.map((att) => {
+                        const isLink = isLinkAttachment(att);
+                        return (
+                          <div
+                            key={att.id}
+                            className="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="h-9 w-9 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] shrink-0">
+                                {isLink ? (
+                                  <LinkIcon className="h-4 w-4 stroke-current" strokeWidth={2} />
+                                ) : (
+                                  <FileIcon className="h-4 w-4 stroke-current" strokeWidth={2} />
+                                )}
+                              </div>
+                              <div className="truncate">
+                                <p className="text-xs font-semibold text-slate-900 dark:text-[#F2F2F7] truncate">
+                                  {att.name}
+                                </p>
+                                <p className="text-[11px] text-slate-400 dark:text-[#A0A0B0] truncate">
+                                  {isLink
+                                    ? `${att.url} · ${att.uploadedBy}`
+                                    : `${formatFileSize(att.size)} · ${att.uploadedBy}`}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <a
+                                href={att.url}
+                                download={isLink ? undefined : att.name}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="min-h-[36px] px-3 py-1 text-xs font-semibold text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] hover:bg-slate-200/70 dark:hover:bg-[#24242E] rounded-lg transition-colors flex items-center gap-1.5"
+                              >
+                                {isLink ? (
+                                  <>
+                                    <ExternalLink className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                                    <span>Open</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                                    <span>Download</span>
+                                  </>
+                                )}
+                              </a>
+                              {canRemoveAttachment(att) && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteAttachmentFromTask(task.id, att.id)}
+                                  className="min-h-[36px] px-2.5 py-1 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] rounded-lg cursor-pointer flex items-center gap-1"
+                                  title="Remove attachment"
+                                  aria-label={`Remove ${att.name}`}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
+                                  <span className="hidden sm:inline">Remove</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {allAttachments.length === 0 && uploadingFiles.length === 0 && (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-colors"
+                  >
+                    No files or links attached yet. Tap &ldquo;Add attachment&rdquo; to upload photos or documents (max 10 MB).
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* BRIEF TAB (Designer) */}
+          {/* BRIEF TAB */}
           {activeTab === 'brief' && (
-            <div className="space-y-3">
+            <div className="space-y-3 orbit-view-fade">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Design Brief & Visual Guidelines
@@ -653,9 +1049,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* CAPTION TAB (Designer) */}
+          {/* CAPTION TAB */}
           {activeTab === 'caption' && (
-            <div className="space-y-3">
+            <div className="space-y-3 orbit-view-fade">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Draft Caption, Hashtags & CTA
@@ -688,9 +1084,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* NOTES TAB (Student) */}
+          {/* NOTES TAB */}
           {activeTab === 'notes' && (
-            <div className="space-y-3">
+            <div className="space-y-3 orbit-view-fade">
               <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Study Notes & Requirements
               </h4>
@@ -706,7 +1102,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
           {/* COMMENTS TAB */}
           {activeTab === 'comments' && (
-            <div className="space-y-4">
+            <div className="space-y-4 orbit-view-fade">
               <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
                 {task.comments && task.comments.length > 0 ? (
                   task.comments.map((comment) => (
@@ -731,11 +1127,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-6">No comments yet. Start the discussion below.</p>
+                  <p className="text-xs text-slate-400 text-center py-6">
+                    No comments yet. Start the discussion below.
+                  </p>
                 )}
               </div>
 
-              {/* Add Comment Input */}
               <form onSubmit={handleAddComment} className="flex gap-2">
                 <input
                   type="text"
@@ -758,7 +1155,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
           {/* ACTIVITY TAB */}
           {activeTab === 'activity' && (
-            <div className="space-y-3">
+            <div className="space-y-3 orbit-view-fade">
               <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Audit & Activity Log
               </h4>
@@ -793,7 +1190,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
         {/* BOTTOM ACTION BAR */}
         <div className="p-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#1B1B24] flex items-center justify-between shrink-0">
-          {/* Left: Edit and Delete buttons */}
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -807,24 +1203,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <span>Edit</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="min-h-[40px] px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] rounded-xl cursor-pointer transition-colors flex items-center gap-1.5"
-            >
-              <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
-              <span>Delete</span>
-            </button>
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="min-h-[40px] px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] rounded-xl cursor-pointer transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
+                <span>Delete</span>
+              </button>
+            )}
           </div>
 
-          {/* Right: Filled Green "Mark done" button */}
           <button
             type="button"
             onClick={() => handleStepClick(task.status === 'done' ? 'todo' : 'done')}
             className={`min-h-[42px] px-5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer flex items-center gap-2 ${
               task.status === 'done'
                 ? 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-[#F2F2F7] hover:bg-slate-300'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-98'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
             }`}
           >
             <CheckCircle2 className="h-4 w-4 stroke-current" strokeWidth={2} />
@@ -832,10 +1229,72 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </button>
         </div>
 
+        {/* Full-Size Image Lightbox Overlay */}
+        {lightboxAttachment && (
+          <div
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xs orbit-view-fade"
+            onClick={() => setLightboxAttachment(null)}
+          >
+            <div
+              className="relative max-w-4xl w-full flex flex-col items-center gap-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-full flex items-center justify-between text-white px-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold truncate">{lightboxAttachment.name}</p>
+                  <p className="text-xs text-slate-300">
+                    {formatFileSize(lightboxAttachment.size)} · Uploaded by {lightboxAttachment.uploadedBy}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={lightboxAttachment.url}
+                    download={lightboxAttachment.name}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <Download className="h-4 w-4 stroke-current" strokeWidth={2} />
+                    <span>Download</span>
+                  </a>
+                  {canRemoveAttachment(lightboxAttachment) && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const idToRemove = lightboxAttachment.id;
+                        setLightboxAttachment(null);
+                        await deleteAttachmentFromTask(task.id, idToRemove);
+                      }}
+                      className="min-h-[40px] px-3.5 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setLightboxAttachment(null)}
+                    aria-label="Close full-size image"
+                    className="min-h-[40px] min-w-[40px] h-10 w-10 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center cursor-pointer"
+                  >
+                    <X className="h-5 w-5 stroke-current" strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+
+              <img
+                src={lightboxAttachment.url}
+                alt={lightboxAttachment.name}
+                className="max-h-[75dvh] max-w-full rounded-xl object-contain shadow-2xl border border-white/10"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Delete Confirmation Dialog Modal */}
         {showDeleteConfirm && (
           <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-2xs">
-            <div className="w-full max-w-sm p-5 rounded-2xl bg-white dark:bg-[#1E1E28] border border-slate-200 dark:border-slate-700 shadow-xl space-y-4">
+            <div className="orbit-modal-enter w-full max-w-sm p-5 rounded-2xl bg-white dark:bg-[#1E1E28] border border-slate-200 dark:border-slate-700 shadow-xl space-y-4">
               <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
                 <Trash2 className="h-5 w-5 stroke-current" strokeWidth={2} />
                 <h4 className="text-sm font-bold text-slate-900 dark:text-[#F2F2F7]">
@@ -843,7 +1302,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </h4>
               </div>
               <p className="text-xs text-slate-600 dark:text-[#A0A0B0] leading-relaxed">
-                This action will delete &ldquo;{task.title}&rdquo;. You will have 5 seconds to undo.
+                This action will delete &ldquo;{task.title}&rdquo; and its attached files. You will have 5 seconds to undo.
               </p>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button

@@ -11,9 +11,42 @@
     --orbit-accent-text: #534AB7;
   }
 
+  html,
   body {
     font-family: var(--font-sans);
-    transition: font-size 0.15s ease;
+    transition: background-color 220ms ease, color 180ms ease, font-size 150ms ease;
+  }
+
+  /* Smooth theme transitions without layout shift or flash */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color;
+    transition-duration: 180ms;
+    transition-timing-function: ease-out;
+  }
+
+  /* Visible keyboard focus ring + subtle interactive button lift/press */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--orbit-accent, #534AB7);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled) {
+    transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+  }
+
+  button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  button:not(:disabled):active {
+    transform: translateY(0) scale(0.98);
   }
 
   code, kbd, samp, pre {
@@ -57,7 +90,6 @@
    Icon Standards & Accessible Touch Targets
    ========================================================================= */
 
-/* Primary Icons: High contrast in light and dark mode */
 .icon-primary {
   color: #1E293B;
   stroke: currentColor;
@@ -66,7 +98,6 @@
   color: #F2F2F7 !important;
 }
 
-/* Secondary Icons: Balanced muted tone */
 .icon-secondary {
   color: #64748B;
   stroke: currentColor;
@@ -75,7 +106,6 @@
   color: #A0A0B0 !important;
 }
 
-/* Active / Selected Icons: Accent #8B7BFF in dark mode */
 .icon-active {
   color: #534AB7;
   stroke: currentColor;
@@ -84,7 +114,6 @@
   color: #8B7BFF !important;
 }
 
-/* Accessible Icon Button: At least 40px tap area, visible hover/pressed #24242E in dark mode */
 .btn-icon {
   min-width: 40px;
   min-height: 40px;
@@ -92,7 +121,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.75rem;
-  transition: all 0.15s ease-out;
+  transition: all 150ms ease-out;
   cursor: pointer;
 }
 .btn-icon:hover {
@@ -104,10 +133,148 @@
 }
 
 /* =========================================================================
-   Orbit Login & Brand Animations
+   Interactive Micro-Motions (All strictly < 300ms)
    ========================================================================= */
 
-/* Center Circle Pulse (scale 1 to 1.05, 3s, ease-in-out) */
+/* 1. View / Tab Cross-Fade (180ms) */
+@keyframes orbit-view-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.orbit-view-fade {
+  animation: orbit-view-fade-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 2. Modal Scale & Fade In (190ms) */
+@keyframes orbit-modal-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.orbit-modal-enter {
+  animation: orbit-modal-scale-in 190ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 3. Task Row Entrance Slide-In (200ms) */
+@keyframes orbit-task-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.orbit-task-enter {
+  animation: orbit-task-slide-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 4. Checkmark Stroke Draw-In (210ms) */
+@keyframes orbit-check-stroke {
+  0% {
+    stroke-dashoffset: 24;
+    transform: scale(0.85);
+  }
+  100% {
+    stroke-dashoffset: 0;
+    transform: scale(1);
+  }
+}
+
+.orbit-check-draw {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 0;
+  animation: orbit-check-stroke 210ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 5. Task Card Slide to Completed / Collapse (220ms) */
+@keyframes orbit-task-slide-complete {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(22px) scale(0.97);
+  }
+}
+
+.orbit-task-completing {
+  animation: orbit-task-slide-complete 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes orbit-task-collapse-delete {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    max-height: 160px;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
+.orbit-task-deleting {
+  animation: orbit-task-collapse-delete 220ms ease-out forwards;
+}
+
+/* 6. Overdue Red Edge Gentle Pulse (Once on load only, 280ms x 2) */
+@keyframes orbit-overdue-edge-pulse {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.45;
+    filter: brightness(1.35);
+  }
+}
+
+.orbit-overdue-pulse {
+  animation: orbit-overdue-edge-pulse 280ms ease-in-out 2;
+}
+
+/* 7. Small Confetti Burst on Last Daily Task Completed (280ms) */
+@keyframes orbit-confetti-pop {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.6) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx, 20px), var(--ty, -28px)) scale(1.1) rotate(var(--rot, 140deg));
+  }
+}
+
+.orbit-confetti-dot {
+  animation: orbit-confetti-pop 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================================================
+   Orbit Login & Brand Animations (< 300ms entrance)
+   ========================================================================= */
+
 @keyframes orbit-center-pulse {
   0%, 100% {
     transform: scale(1);
@@ -131,16 +298,10 @@
   display: none;
 }
 
-/* Login Entrance: Fade and slide up in order:
-   1. logo (0ms)
-   2. wordmark (100ms)
-   3. tagline (200ms)
-   4. button / action (300ms)
-   Each taking 500ms with ease-out curve */
 @keyframes login-fade-slide-up {
   0% {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;
@@ -149,22 +310,21 @@
 }
 
 .login-entrance-logo {
-  animation: login-fade-slide-up 500ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both;
+  animation: login-fade-slide-up 240ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both;
 }
 
 .login-entrance-title {
-  animation: login-fade-slide-up 500ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+  animation: login-fade-slide-up 240ms cubic-bezier(0.16, 1, 0.3, 1) 40ms both;
 }
 
 .login-entrance-tagline {
-  animation: login-fade-slide-up 500ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+  animation: login-fade-slide-up 240ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
 }
 
 .login-entrance-button {
-  animation: login-fade-slide-up 500ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+  animation: login-fade-slide-up 240ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
 }
 
-/* Background Ambient Glow Breathing (16s loop) */
 @keyframes ambient-glow-drift {
   0%, 100% {
     transform: scale(1) translate(0, 0);
@@ -180,7 +340,6 @@
   animation: ambient-glow-drift 16s ease-in-out infinite;
 }
 
-/* Background Tiny Celestial Dots Drift */
 @keyframes particle-drift-1 {
   0%, 100% {
     transform: translateY(0) translateX(0);
@@ -224,6 +383,20 @@
    Accessibility: prefers-reduced-motion
    ========================================================================= */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  button:not(:disabled):hover,
+  button:not(:disabled):active {
+    transform: none !important;
+  }
+
   .login-entrance-logo,
   .login-entrance-title,
   .login-entrance-tagline,
@@ -232,7 +405,15 @@
   .ambient-glow-animated,
   .particle-float-1,
   .particle-float-2,
-  .particle-float-3 {
+  .particle-float-3,
+  .orbit-view-fade,
+  .orbit-modal-enter,
+  .orbit-task-enter,
+  .orbit-check-draw,
+  .orbit-task-completing,
+  .orbit-task-deleting,
+  .orbit-overdue-pulse,
+  .orbit-confetti-dot {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
@@ -246,4 +427,3 @@
     display: block !important;
   }
 }
-

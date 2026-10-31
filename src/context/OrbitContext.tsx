@@ -54,6 +54,7 @@ import {
   requestNotificationPermission,
   isNotificationSupported,
 } from '../utils/notifications';
+import { deleteFileFromStorage, deleteAllTaskStorageFiles } from '../utils/attachments';
 
 export const ACCENT_PALETTES: Record<
   AccentColor,
@@ -121,7 +122,7 @@ interface OrbitContextValue {
   setModalDefaultDueDate: (date?: string) => void;
 
   // Task CRUD & Detail Actions
-  createTask: (taskData: Omit<Task, 'id' | 'userId' | 'createdBy' | 'createdAt' | 'updatedAt' | 'completedAt'> & { isSharedPairTask?: boolean; isTeamTask?: boolean }) => Promise<Task>;
+  createTask: (taskData: Omit<Task, 'id' | 'userId' | 'createdBy' | 'createdAt' | 'updatedAt' | 'completedAt'> & { id?: string; isSharedPairTask?: boolean; isTeamTask?: boolean }) => Promise<Task>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   toggleTaskDone: (taskId: string) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
@@ -707,13 +708,14 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Create Task
   const createTask = async (
     taskData: Omit<Task, 'id' | 'userId' | 'createdBy' | 'createdAt' | 'updatedAt' | 'completedAt'> & {
+      id?: string;
       isSharedPairTask?: boolean;
       isTeamTask?: boolean;
     }
   ): Promise<Task> => {
     if (!currentUser) throw new Error('Must be signed in to create tasks');
 
-    const taskId = `tsk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const taskId = taskData.id || `tsk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const now = new Date().toISOString();
 
     const isShared = Boolean(taskData.isSharedPairTask && activePair && role === 'boss');
@@ -887,6 +889,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (selectedTaskToEdit?.id === taskId) setSelectedTaskToEdit(null);
 
     try {
+      await deleteAllTaskStorageFiles(task.attachments);
       await deleteDoc(doc(db, path));
       showToast('Task deleted', 'success');
     } catch (err) {
@@ -904,6 +907,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       clearTimeout(pendingDeleteRef.current.timer);
       const flushTasks = pendingDeleteRef.current.tasks;
       flushTasks.forEach((ft) => {
+        deleteAllTaskStorageFiles(ft.attachments).catch(console.error);
         deleteDoc(doc(db, getTaskPath(ft))).catch(console.error);
       });
       pendingDeleteRef.current = null;
@@ -920,6 +924,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 2. Set 5-second timer
     const timer = setTimeout(async () => {
       try {
+        await deleteAllTaskStorageFiles(task.attachments);
         await deleteDoc(doc(db, getTaskPath(task)));
       } catch (err) {
         console.error('Final task deletion failed:', err);
@@ -952,6 +957,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (pendingDeleteRef.current) {
       clearTimeout(pendingDeleteRef.current.timer);
       pendingDeleteRef.current.tasks.forEach((ft) => {
+        deleteAllTaskStorageFiles(ft.attachments).catch(console.error);
         deleteDoc(doc(db, getTaskPath(ft))).catch(console.error);
       });
       pendingDeleteRef.current = null;
@@ -969,6 +975,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const timer = setTimeout(async () => {
       try {
         for (const t of tasksToDelete) {
+          await deleteAllTaskStorageFiles(t.attachments);
           await deleteDoc(doc(db, getTaskPath(t)));
         }
       } catch (err) {
@@ -1073,11 +1080,12 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: `att_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       uploadedAt: new Date().toISOString(),
       uploadedBy: currentUser.displayName || currentUser.email || 'User',
+      uploadedByUid: currentUser.uid,
     };
 
     const newActivity: TaskActivity = {
       id: `act_${Date.now()}`,
-      action: `Attached file: ${attachment.name}`,
+      action: attachment.isLink ? `Added link: ${attachment.name}` : `Attached file: ${attachment.name}`,
       performedBy: currentUser.displayName || currentUser.email || 'User',
       timestamp: new Date().toISOString(),
     };
@@ -1097,9 +1105,22 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const task = allTasks.find((t) => t.id === taskId);
     if (!task) return;
 
+    const targetAtt = (task.attachments || []).find((a) => a.id === attachmentId);
+    if (targetAtt?.storagePath && !targetAtt.isLink) {
+      await deleteFileFromStorage(targetAtt.storagePath);
+    }
+
     const updatedAttachments = (task.attachments || []).filter((a) => a.id !== attachmentId);
+    const newActivity: TaskActivity = {
+      id: `act_${Date.now()}`,
+      action: `Removed attachment: ${targetAtt?.name || 'file'}`,
+      performedBy: currentUser.displayName || currentUser.email || 'User',
+      timestamp: new Date().toISOString(),
+    };
+
     await updateTask(taskId, {
       attachments: updatedAttachments,
+      activityLog: [...(task.activityLog || []), newActivity],
     });
   };
 

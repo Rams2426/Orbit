@@ -70,7 +70,10 @@ export interface TaskAttachment {
   url: string;
   size: number;
   type?: string;
+  storagePath?: string;
+  isLink?: boolean;
   uploadedBy: string;
+  uploadedByUid?: string;
   uploadedAt: string;
 }
 
