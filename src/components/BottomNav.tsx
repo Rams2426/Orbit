@@ -18,7 +18,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
   return (
     <nav
       aria-label="Bottom Navigation"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#14141A]/95 backdrop-blur-md border-t border-slate-200 dark:border-[#2E2E3A] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
     >
       <div className="max-w-md sm:max-w-xl mx-auto flex items-center justify-around px-4 py-1.5">
         {navItems.map((item) => {

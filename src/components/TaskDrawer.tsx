@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useOrbit } from '../context/OrbitContext';
 import { Task } from '../types/orbit';
-import { formatTimeDisplay } from '../utils/timeFormat';
+import { formatTimeDisplay, canUserDeleteTask } from '../utils/timeFormat';
 import {
   X,
   Plus,
@@ -53,19 +53,8 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
 
   const dayTasks = tasks.filter((t) => t.dueDate === dateStr);
 
-  const canDeleteTask = (task: Task) => {
-    if (task.teamId) {
-      return (
-        userTeamRole === 'owner' ||
-        userTeamRole === 'admin' ||
-        task.createdBy === currentUser?.uid
-      );
-    }
-    if (task.pairId) {
-      return task.createdBy === currentUser?.uid || task.userId === currentUser?.uid;
-    }
-    return true;
-  };
+  const canDeleteTask = (task: Task) =>
+    canUserDeleteTask(task, currentUser?.uid, userTeamRole);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -76,9 +65,9 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 z-50 animate-in slide-in-from-right duration-200">
+      <div className="relative w-full max-w-md bg-white dark:bg-[#1A1A22] h-full shadow-2xl flex flex-col border-l border-slate-200 dark:border-[#2E2E3A] z-50 animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-[#2E2E3A]">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] font-semibold uppercase tracking-wider">
               <Calendar className="h-5 w-5 stroke-current" strokeWidth={2} />
@@ -107,7 +96,7 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenNewTaskForDate(dateStr)}
-                className="mt-3 min-h-[40px] px-3 py-2 text-xs font-semibold text-[var(--orbit-accent,#534AB7)] hover:text-[var(--orbit-accent-hover,#433B9B)] dark:text-[#8B7BFF] dark:hover:text-white cursor-pointer"
+                className="mt-3 min-h-[40px] px-3 py-2 text-xs font-semibold text-[var(--orbit-accent,#534AB7)] hover:text-[var(--orbit-accent-hover,#433B9B)] dark:text-[#8B7BFF] dark:hover:text-[#9B8EFF] cursor-pointer"
               >
                 + Add task for this date
               </button>
@@ -126,8 +115,8 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
                   }}
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                     isDone
-                      ? 'border-slate-200/60 bg-slate-50/50 dark:border-slate-800/60 dark:bg-slate-850/50 opacity-80'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 shadow-2xs'
+                      ? 'border-slate-200/60 bg-slate-50/50 dark:border-[#2E2E3A]/60 dark:bg-[#24242E]/50 opacity-75'
+                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-[#2E2E3A] dark:bg-[#24242E] dark:hover:border-[#8B7BFF]/50 shadow-2xs'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -138,12 +127,12 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
                         toggleTaskDone(task.id);
                       }}
                       aria-label={isDone ? 'Mark as pending' : 'Mark as done'}
-                      className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] transition-colors cursor-pointer shrink-0"
+                      className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-[#2E2E3A] active:bg-slate-200 dark:active:bg-[#2E2E3A] transition-colors cursor-pointer shrink-0"
                       title={isDone ? 'Mark pending' : 'Mark done'}
                     >
                       {isDone ? (
                         <CheckCircle2
-                          className="h-5 w-5 stroke-current text-emerald-600 dark:text-emerald-400 fill-emerald-50 dark:fill-emerald-950/40"
+                          className="h-5 w-5 stroke-current text-emerald-600 dark:text-[#4ADE80] fill-emerald-50 dark:fill-emerald-950/40"
                           strokeWidth={2}
                         />
                       ) : (
@@ -181,7 +170,7 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
                       <h4
                         className={`text-xs font-semibold ${
                           isDone
-                            ? 'line-through text-slate-400 dark:text-slate-500'
+                            ? 'line-through text-slate-400 dark:text-[#6E6E80]'
                             : 'text-slate-900 dark:text-[#F2F2F7]'
                         }`}
                       >
@@ -206,7 +195,7 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
                           onOpenEditTask(task);
                         }}
                         aria-label={`Edit ${task.title}`}
-                        className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center text-slate-500 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] rounded-xl transition-colors cursor-pointer"
+                        className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center text-slate-500 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] active:bg-slate-200 dark:active:bg-[#2E2E3A] rounded-xl transition-colors cursor-pointer"
                       >
                         <Edit2 className="h-4 w-4 stroke-current" strokeWidth={2} />
                         <span className="sr-only">Edit</span>
@@ -216,7 +205,7 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
                           type="button"
                           onClick={() => setTaskToDelete(task)}
                           aria-label={`Delete ${task.title}`}
-                          className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center text-slate-500 dark:text-[#A0A0B0] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] rounded-xl transition-colors cursor-pointer"
+                          className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center text-slate-500 dark:text-[#A0A0B0] hover:text-rose-600 dark:hover:text-[#FF6B6B] hover:bg-rose-50 dark:hover:bg-[#2E2E3A] active:bg-rose-100 dark:active:bg-[#2E2E3A] rounded-xl transition-colors cursor-pointer"
                         >
                           <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
                           <span className="sr-only">Delete</span>
@@ -231,11 +220,11 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+        <div className="p-4 border-t border-slate-100 dark:border-[#2E2E3A] bg-slate-50 dark:bg-[#14141A]">
           <button
             type="button"
             onClick={() => onOpenNewTaskForDate(dateStr)}
-            className="min-h-[40px] w-full py-2.5 px-3 rounded-xl bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] text-xs font-semibold text-white shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="min-h-[40px] w-full py-2.5 px-3 rounded-xl bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#9B8EFF] text-xs font-semibold text-white dark:text-[#0F0F14] shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <Plus className="h-5 w-5 stroke-current" strokeWidth={2} />
             <span>Add Deadline on this Date</span>
@@ -245,8 +234,8 @@ export const TaskDrawer: React.FC<TaskDrawerProps> = ({
         {/* Delete Confirmation Modal */}
         {taskToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-            <div className="w-full max-w-sm p-5 rounded-[16px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-              <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400">
+            <div className="w-full max-w-sm p-5 rounded-[16px] bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] shadow-2xl space-y-4">
+              <div className="flex items-center gap-2.5 text-rose-600 dark:text-[#FF6B6B]">
                 <Trash2 className="h-5 w-5 stroke-current" strokeWidth={2} />
                 <h3 className="text-sm font-bold text-slate-900 dark:text-[#F2F2F7]">
                   Delete this task?

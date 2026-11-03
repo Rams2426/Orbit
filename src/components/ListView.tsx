@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useOrbit } from '../context/OrbitContext';
 import { Task } from '../types/orbit';
-import { formatTimeDisplay } from '../utils/timeFormat';
+import { formatTimeDisplay, CONFETTI_DOTS, canUserDeleteTask } from '../utils/timeFormat';
 import {
   parseQuickAddTask,
   getLiveCountdown,
@@ -275,8 +275,9 @@ export const ListView: React.FC<ListViewProps> = ({
     if (task.status === 'done') {
       return {
         label: 'Completed',
-        colorBarClass: 'bg-emerald-500/70',
-        textClass: 'text-emerald-600 dark:text-emerald-400',
+        colorBarClass: 'bg-[#4ADE80]/70',
+        textClass: 'text-emerald-600 dark:text-[#4ADE80]',
+        badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#4ADE80]/15 dark:text-[#4ADE80] dark:border-[#4ADE80]/30',
         isOverdue: false,
       };
     }
@@ -286,9 +287,9 @@ export const ListView: React.FC<ListViewProps> = ({
     if (taskDueDateTime < nowMs) {
       return {
         label: 'Overdue',
-        colorBarClass: 'bg-rose-500 orbit-overdue-pulse',
-        textClass: 'text-rose-600 dark:text-rose-400 font-semibold',
-        badgeBg: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/70',
+        colorBarClass: 'bg-[#FF6B6B] orbit-overdue-pulse',
+        textClass: 'text-rose-600 dark:text-[#FF6B6B] font-semibold',
+        badgeBg: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-[#FF6B6B]/15 dark:text-[#FF6B6B] dark:border-[#FF6B6B]/30',
         isOverdue: true,
       };
     }
@@ -297,18 +298,18 @@ export const ListView: React.FC<ListViewProps> = ({
       const liveText = getLiveCountdown(task.dueDate, task.dueTime, nowMs);
       return {
         label: liveText || 'Due soon',
-        colorBarClass: 'bg-amber-500',
-        textClass: 'text-amber-600 dark:text-amber-400 font-semibold',
-        badgeBg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/70',
+        colorBarClass: 'bg-[#FFB84D]',
+        textClass: 'text-amber-600 dark:text-[#FFB84D] font-semibold',
+        badgeBg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-[#FFB84D]/15 dark:text-[#FFB84D] dark:border-[#FFB84D]/30',
         isOverdue: false,
       };
     }
 
     return {
       label: 'On track',
-      colorBarClass: 'bg-emerald-500',
-      textClass: 'text-emerald-600 dark:text-emerald-400 font-medium',
-      badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/70',
+      colorBarClass: 'bg-[#4ADE80]',
+      textClass: 'text-emerald-600 dark:text-[#4ADE80] font-medium',
+      badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#4ADE80]/15 dark:text-[#4ADE80] dark:border-[#4ADE80]/30',
       isOverdue: false,
     };
   };
@@ -339,19 +340,8 @@ export const ListView: React.FC<ListViewProps> = ({
     return <span className={`text-[11px] ${map.class}`}>{map.label}</span>;
   };
 
-  const canDeleteTask = (task: Task) => {
-    if (task.teamId) {
-      return (
-        userTeamRole === 'owner' ||
-        userTeamRole === 'admin' ||
-        task.createdBy === currentUser?.uid
-      );
-    }
-    if (task.pairId) {
-      return task.createdBy === currentUser?.uid || task.userId === currentUser?.uid;
-    }
-    return true;
-  };
+  const canDeleteTask = (task: Task) =>
+    canUserDeleteTask(task, currentUser?.uid, userTeamRole);
 
   const toggleSelectTask = (id: string) => {
     setSelectedIds((prev) => {
@@ -437,20 +427,11 @@ export const ListView: React.FC<ListViewProps> = ({
     );
   };
 
-  const confettiDots = [
-    { tx: '-18px', ty: '-16px', color: '#10B981' },
-    { tx: '18px', ty: '-14px', color: '#8B7BFF' },
-    { tx: '-20px', ty: '12px', color: '#F59E0B' },
-    { tx: '16px', ty: '15px', color: '#EC4899' },
-    { tx: '0px', ty: '-22px', color: '#3B82F6' },
-    { tx: '22px', ty: '2px', color: '#10B981' },
-  ];
-
   return (
     <div className="flex-1 max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 pb-28 orbit-view-fade">
       {/* Smart Quick Add Bar at top of Tasks page */}
       <form onSubmit={handleQuickAddSubmit} className="mb-5">
-        <div className="relative flex items-center rounded-[14px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs focus-within:border-[var(--orbit-accent,#534AB7)] dark:focus-within:border-[#8B7BFF] focus-within:ring-2 focus-within:ring-[var(--orbit-accent,#534AB7)]/20 transition-all">
+        <div className="relative flex items-center rounded-[14px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] shadow-2xs focus-within:border-[var(--orbit-accent,#534AB7)] dark:focus-within:border-[#8B7BFF] focus-within:ring-2 focus-within:ring-[var(--orbit-accent,#534AB7)]/20 transition-all">
           <div className="pl-3.5 pr-2 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] shrink-0">
             <Zap className="h-4 w-4 stroke-current" strokeWidth={2} />
           </div>
@@ -460,13 +441,13 @@ export const ListView: React.FC<ListViewProps> = ({
             onChange={(e) => setQuickAddInput(e.target.value)}
             placeholder='Quick add: e.g. "Lab report friday 5pm" or "Brand reel tomorrow 2:30pm"'
             aria-label="Quick add task with natural language date and time"
-            className="w-full py-3 pr-28 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-[#F2F2F7] placeholder-slate-400 dark:placeholder-[#A0A0B0] focus:outline-none"
+            className="w-full py-3 pr-28 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-[#F2F2F7] placeholder-slate-400 dark:placeholder-[#6E6E80] focus:outline-none"
           />
           {quickAddInput.trim() && (
             <button
               type="submit"
               disabled={isQuickAdding}
-              className="absolute right-2 min-h-[34px] px-3 py-1.5 rounded-[10px] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] text-white text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+              className="absolute right-2 min-h-[34px] px-3 py-1.5 rounded-[10px] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] text-white dark:text-[#0F0F14] text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
             >
               <Plus className="h-3.5 w-3.5 stroke-current" strokeWidth={2.5} />
               <span>Add</span>
@@ -495,7 +476,7 @@ export const ListView: React.FC<ListViewProps> = ({
       </form>
 
       {/* Top Row: Tabs (Pending / Completed) with Sliding Underline + Progress Line & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-[#2E2E3A] mb-5">
         {/* Tab Row with Sliding Underline */}
         <div className="relative grid grid-cols-2 w-64 sm:w-72 -mb-px">
           <button
@@ -551,7 +532,7 @@ export const ListView: React.FC<ListViewProps> = ({
               <strong className="font-bold text-slate-900 dark:text-[#F2F2F7]">{doneCount}</strong> of{' '}
               <strong className="font-bold text-slate-900 dark:text-[#F2F2F7]">{totalCount}</strong> done
             </span>
-            <div className="w-24 sm:w-28 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+            <div className="w-24 sm:w-28 h-1.5 rounded-full bg-slate-200 dark:bg-[#24242E] overflow-hidden">
               <div
                 className="h-full rounded-full bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] transition-all duration-250 ease-out"
                 style={{ width: `${progressPercent}%` }}
@@ -564,7 +545,7 @@ export const ListView: React.FC<ListViewProps> = ({
             <button
               type="button"
               onClick={() => setShowClearCompletedConfirm(true)}
-              className="min-h-[38px] px-3 py-1.5 text-xs font-semibold rounded-[10px] border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-[#24242E] flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[38px] px-3 py-1.5 text-xs font-semibold rounded-[10px] border border-rose-200 dark:border-[#2E2E3A] bg-rose-50/70 dark:bg-[#24242E] text-rose-600 dark:text-[#FF6B6B] hover:bg-rose-100 dark:hover:bg-[#2E2E3A] flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
               <span>Clear completed</span>
@@ -579,22 +560,22 @@ export const ListView: React.FC<ListViewProps> = ({
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="p-4 rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-4"
+              className="p-4 rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3 flex-1">
-                <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0" />
+                <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-[#24242E] animate-pulse shrink-0" />
                 <div className="space-y-2 flex-1">
-                  <div className="h-3 w-28 rounded bg-slate-100 dark:bg-slate-800/80 animate-pulse" />
-                  <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                  <div className="h-3 w-28 rounded bg-slate-100 dark:bg-[#24242E]/80 animate-pulse" />
+                  <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-[#24242E] animate-pulse" />
                 </div>
               </div>
-              <div className="h-6 w-24 rounded bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
+              <div className="h-6 w-24 rounded bg-slate-100 dark:bg-[#24242E] animate-pulse shrink-0" />
             </div>
           ))}
         </div>
       ) : displayedTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-[16px] border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 orbit-view-fade">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] mb-3">
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-[16px] border border-dashed border-slate-200 dark:border-[#2E2E3A] bg-white/50 dark:bg-[#1A1A22] orbit-view-fade">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-[#24242E] text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] mb-3">
             {activeListTab === 'pending' ? (
               <Sparkles className="h-5 w-5 stroke-current" strokeWidth={2} />
             ) : (
@@ -614,7 +595,7 @@ export const ListView: React.FC<ListViewProps> = ({
           {activeListTab === 'pending' && (
             <button
               onClick={onOpenNewTask}
-              className="mt-4 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] rounded-[10px] shadow-xs transition-colors cursor-pointer"
+              className="mt-4 min-h-[40px] px-4 py-2 text-xs font-semibold text-white dark:text-[#0F0F14] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] rounded-[10px] shadow-xs transition-colors cursor-pointer"
             >
               + Add task
             </button>
@@ -776,10 +757,10 @@ export const ListView: React.FC<ListViewProps> = ({
                   }}
                   className={`relative flex items-stretch rounded-[16px] border transition-transform duration-150 ease-out shadow-2xs cursor-pointer ${
                     isSelected
-                      ? 'border-[var(--orbit-accent,#534AB7)] ring-1 ring-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] bg-white dark:bg-slate-900'
+                      ? 'border-[var(--orbit-accent,#534AB7)] ring-1 ring-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:ring-[#8B7BFF] bg-white dark:bg-[#24242E]'
                       : isDone
-                      ? 'border-slate-200/70 bg-slate-50 dark:border-slate-800/70 dark:bg-slate-900'
-                      : 'border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:hover:border-slate-700 dark:bg-slate-900'
+                      ? 'border-slate-200/70 bg-slate-50 dark:border-[#2E2E3A] dark:bg-[#1A1A22]/70'
+                      : 'border-slate-200 hover:border-slate-300 bg-white dark:border-[#2E2E3A] dark:hover:border-[#3E3E4E] dark:bg-[#1A1A22] dark:hover:bg-[#24242E]'
                   }`}
                 >
                   {/* Left Color Bar: Red (overdue with 1x pulse on load), Amber (due soon), Green (on track / completed) */}
@@ -825,7 +806,7 @@ export const ListView: React.FC<ListViewProps> = ({
                           >
                             {isDone || isCompleting ? (
                               <svg
-                                className="h-6 w-6 text-emerald-600 dark:text-emerald-400"
+                                className="h-6 w-6 text-emerald-600 dark:text-[#4ADE80]"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -837,7 +818,7 @@ export const ListView: React.FC<ListViewProps> = ({
                                   cx="12"
                                   cy="12"
                                   r="10"
-                                  className="fill-emerald-50 dark:fill-emerald-950/40"
+                                  className="fill-emerald-50 dark:fill-[#4ADE80]/20"
                                 />
                                 <path d="M8 12.5l3 3 5-6" className="orbit-check-draw" />
                               </svg>
@@ -858,7 +839,7 @@ export const ListView: React.FC<ListViewProps> = ({
                               className="pointer-events-none absolute inset-0 flex items-center justify-center"
                               aria-hidden="true"
                             >
-                              {confettiDots.map((dot, idx) => (
+                              {CONFETTI_DOTS.map((dot, idx) => (
                                 <span
                                   key={idx}
                                   className="orbit-confetti-dot absolute h-1.5 w-1.5 rounded-full"
@@ -960,13 +941,13 @@ export const ListView: React.FC<ListViewProps> = ({
                     </div>
 
                     {/* Right: Assignee Initials, Date/Time, Live Countdown & Actions */}
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-[#2E2E3A]">
                       {!isDone && (
                         <div className="flex items-center gap-2.5">
                           {task.assigneeName && (
                             <div
                               title={`Assigned to ${task.assigneeName}`}
-                              className="h-7 w-7 rounded-full bg-[var(--orbit-accent,#534AB7)] text-white text-[11px] font-bold flex items-center justify-center shrink-0"
+                              className="h-7 w-7 rounded-full bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] text-[11px] font-bold flex items-center justify-center shrink-0"
                             >
                               {getInitials(task.assigneeName)}
                             </div>
@@ -980,8 +961,8 @@ export const ListView: React.FC<ListViewProps> = ({
                               />
                               <span>
                                 {new Date(task.dueDate + 'T00:00:00').toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
+                                 month: 'short',
+                                 day: 'numeric',
                                 })}
                               </span>
                               <Clock
@@ -1010,7 +991,7 @@ export const ListView: React.FC<ListViewProps> = ({
                                 onClick={() => handleAnimatedToggleDone(task)}
                                 title="Restore task to Pending"
                                 aria-label={`Restore ${task.title}`}
-                                className="min-h-[40px] px-3 py-1.5 flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] transition-colors cursor-pointer"
+                                className="min-h-[40px] px-3 py-1.5 flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] active:bg-slate-200 dark:active:bg-[#2E2E3A] transition-colors cursor-pointer"
                               >
                                 <RotateCcw className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
                                 <span>Restore</span>
@@ -1022,7 +1003,7 @@ export const ListView: React.FC<ListViewProps> = ({
                                   onClick={() => handleAnimatedSingleDelete(task)}
                                   title="Delete task"
                                   aria-label={`Delete ${task.title}`}
-                                  className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-slate-600 dark:text-[#A0A0B0] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] transition-colors cursor-pointer"
+                                  className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-slate-600 dark:text-[#A0A0B0] hover:text-rose-600 dark:hover:text-[#FF6B6B] hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
                                   <span className="sr-only">Delete</span>
@@ -1057,7 +1038,7 @@ export const ListView: React.FC<ListViewProps> = ({
                                   onClick={() => handleAnimatedSingleDelete(task)}
                                   title="Delete task"
                                   aria-label={`Delete ${task.title}`}
-                                  className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-slate-600 dark:text-[#A0A0B0] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] transition-colors cursor-pointer"
+                                  className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-slate-600 dark:text-[#A0A0B0] hover:text-rose-600 dark:hover:text-[#FF6B6B] hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
                                   <span className="sr-only">Delete</span>
@@ -1081,7 +1062,7 @@ export const ListView: React.FC<ListViewProps> = ({
         <div
           role="region"
           aria-label="Bulk task actions"
-          className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-[#1E1E26] dark:text-[#F2F2F7] border border-slate-700 shadow-2xl orbit-modal-enter"
+          className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-[#1A1A22] dark:text-[#F2F2F7] border border-slate-700 dark:border-[#2E2E3A] shadow-2xl orbit-modal-enter"
         >
           <span className="text-xs font-bold px-1.5 tabular-nums">
             {selectedIds.length} selected
@@ -1090,7 +1071,7 @@ export const ListView: React.FC<ListViewProps> = ({
           <button
             type="button"
             onClick={handleBulkComplete}
-            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 dark:bg-[#4ADE80] dark:hover:bg-[#4ADE80]/90 dark:text-[#0F0F14] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
           >
             <CheckCircle2 className="h-4 w-4 stroke-current" strokeWidth={2} />
             <span>Complete</span>
@@ -1100,25 +1081,25 @@ export const ListView: React.FC<ListViewProps> = ({
             <button
               type="button"
               onClick={() => setShowBulkMovePicker((prev) => !prev)}
-              className="min-h-[38px] px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[38px] px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] dark:text-[#0F0F14] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <CalendarDays className="h-4 w-4 stroke-current" strokeWidth={2} />
               <span>Move</span>
             </button>
 
             {showBulkMovePicker && (
-              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-3 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-[#F2F2F7] border border-slate-200 dark:border-slate-700 shadow-xl flex items-center gap-2 z-50 orbit-modal-enter">
+              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-3 rounded-xl bg-white dark:bg-[#1A1A22] text-slate-900 dark:text-[#F2F2F7] border border-slate-200 dark:border-[#2E2E3A] shadow-xl flex items-center gap-2 z-50 orbit-modal-enter">
                 <input
                   type="date"
                   value={bulkMoveDate}
                   onChange={(e) => setBulkMoveDate(e.target.value)}
                   aria-label="New due date for selected tasks"
-                  className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-[#F2F2F7]"
+                  className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-[#2E2E3A] bg-slate-50 dark:bg-[#24242E] text-slate-900 dark:text-[#F2F2F7]"
                 />
                 <button
                   type="button"
                   onClick={handleBulkMove}
-                  className="min-h-[34px] px-3 py-1 rounded-lg bg-[var(--orbit-accent,#534AB7)] text-white text-xs font-semibold cursor-pointer"
+                  className="min-h-[34px] px-3 py-1 rounded-lg bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] text-xs font-semibold cursor-pointer"
                 >
                   Apply
                 </button>
@@ -1129,7 +1110,7 @@ export const ListView: React.FC<ListViewProps> = ({
           <button
             type="button"
             onClick={handleBulkDelete}
-            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 dark:bg-[#FF6B6B] dark:hover:bg-[#FF6B6B]/90 dark:text-[#0F0F14] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
           >
             <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
             <span>Delete</span>
@@ -1143,7 +1124,7 @@ export const ListView: React.FC<ListViewProps> = ({
               setShowBulkMovePicker(false);
             }}
             aria-label="Cancel selection"
-            className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer"
+            className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl text-slate-300 dark:text-[#A0A0B0] hover:text-white dark:hover:text-[#F2F2F7] hover:bg-white/10 dark:hover:bg-[#24242E] cursor-pointer"
           >
             <X className="h-4 w-4 stroke-current" strokeWidth={2} />
           </button>
@@ -1153,9 +1134,9 @@ export const ListView: React.FC<ListViewProps> = ({
       {/* Clear All Completed Confirmation Modal */}
       {showClearCompletedConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-sm p-5 rounded-[16px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 orbit-modal-enter">
+          <div className="w-full max-w-sm p-5 rounded-[16px] bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] shadow-2xl space-y-4 orbit-modal-enter">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2.5 text-rose-600 dark:text-[#FF6B6B]">
                 <Trash2 className="h-5 w-5 stroke-current" strokeWidth={2} />
                 <h3 className="text-sm font-bold text-slate-900 dark:text-[#F2F2F7]">
                   Clear completed tasks?
@@ -1164,7 +1145,7 @@ export const ListView: React.FC<ListViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowClearCompletedConfirm(false)}
-                className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F2F2F7] cursor-pointer"
+                className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:text-[#A0A0B0] dark:hover:text-[#F2F2F7] cursor-pointer"
               >
                 <X className="h-4 w-4 stroke-current" strokeWidth={2} />
               </button>
@@ -1185,7 +1166,7 @@ export const ListView: React.FC<ListViewProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmClearCompleted}
-                className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-[10px] bg-rose-600 hover:bg-rose-700 text-white cursor-pointer transition-colors shadow-xs"
+                className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-[10px] bg-rose-600 hover:bg-rose-700 dark:bg-[#FF6B6B] dark:hover:bg-[#FF6B6B]/90 dark:text-[#0F0F14] text-white cursor-pointer transition-colors shadow-xs"
               >
                 Clear completed
               </button>

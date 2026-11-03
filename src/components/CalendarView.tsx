@@ -120,27 +120,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const getChipColorClasses = (t: Task, isWeekCard = false) => {
     if (t.status === 'done') {
       return isWeekCard
-        ? 'border-slate-200 bg-slate-50/80 opacity-55 line-through text-slate-400 dark:border-slate-800 dark:bg-slate-850/60 dark:text-slate-500'
-        : 'bg-slate-100/80 text-slate-400 border-slate-200 dark:bg-slate-800/60 dark:text-slate-500 dark:border-slate-700/70 opacity-60 line-through';
+        ? 'border-slate-200 bg-slate-50/80 opacity-55 line-through text-slate-400 dark:border-[#2E2E3A] dark:bg-[#24242E]/50 dark:text-[#6E6E80]'
+        : 'bg-slate-100/80 text-slate-400 border-slate-200 dark:bg-[#24242E]/50 dark:text-[#6E6E80] dark:border-[#2E2E3A] opacity-60 line-through';
     }
 
     const dueMs = new Date(`${t.dueDate}T${t.dueTime || '23:59'}`).getTime();
     if (dueMs < nowMs) {
       // Overdue -> Red chip with gentle 1x pulse on load
       return isWeekCard
-        ? 'border-l-4 border-l-rose-500 orbit-overdue-pulse border-rose-200 bg-rose-50/60 text-rose-950 dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200'
-        : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/50 dark:text-rose-200 dark:border-rose-800/70 orbit-overdue-pulse';
+        ? 'border-l-4 border-l-rose-500 orbit-overdue-pulse border-rose-200 bg-rose-50/60 text-rose-950 dark:border-[#FF6B6B]/30 dark:border-l-2 dark:border-l-[#FF6B6B] dark:bg-[#FF6B6B]/15 dark:text-[#FF6B6B]'
+        : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-[#FF6B6B]/15 dark:text-[#FF6B6B] dark:border-[#FF6B6B]/30 dark:border-l-2 dark:border-l-[#FF6B6B] orbit-overdue-pulse';
     }
     if (dueMs <= next24hMs) {
       // Due soon -> Amber chip
       return isWeekCard
-        ? 'border-l-4 border-l-amber-500 border-amber-200 bg-amber-50/60 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200'
-        : 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/70';
+        ? 'border-l-4 border-l-amber-500 border-amber-200 bg-amber-50/60 text-amber-950 dark:border-[#FFB84D]/30 dark:border-l-2 dark:border-l-[#FFB84D] dark:bg-[#FFB84D]/15 dark:text-[#FFB84D]'
+        : 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-[#FFB84D]/15 dark:text-[#FFB84D] dark:border-[#FFB84D]/30 dark:border-l-2 dark:border-l-[#FFB84D]';
     }
     // On track -> Green chip
     return isWeekCard
-      ? 'border-l-4 border-l-emerald-500 border-emerald-200 bg-emerald-50/60 text-emerald-950 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200'
-      : 'bg-emerald-50/90 text-emerald-900 border-emerald-200 dark:bg-emerald-950/45 dark:text-emerald-200 dark:border-emerald-800/70';
+      ? 'border-l-4 border-l-emerald-500 border-emerald-200 bg-emerald-50/60 text-emerald-950 dark:border-[#4ADE80]/30 dark:border-l-2 dark:border-l-[#4ADE80] dark:bg-[#4ADE80]/15 dark:text-[#4ADE80]'
+      : 'bg-emerald-50/90 text-emerald-900 border-emerald-200 dark:bg-[#4ADE80]/15 dark:text-[#4ADE80] dark:border-[#4ADE80]/30 dark:border-l-2 dark:border-l-[#4ADE80]';
   };
 
   const prevPeriod = () => {
@@ -299,7 +299,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             type="button"
             onClick={jumpToToday}
             title="Jump to Today (Shortcut: T)"
-            className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer transition-colors"
+            className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer transition-colors"
           >
             Today
           </button>
@@ -313,8 +313,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             aria-pressed={showCompleted}
             className={`min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
               showCompleted
-                ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF]'
-                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-100 dark:hover:bg-[#24242E]'
+                ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF]'
+                : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-100 dark:hover:bg-[#24242E]'
             }`}
           >
             <CheckCircle2 className="h-4 w-4 stroke-current shrink-0" strokeWidth={2} />
@@ -326,7 +326,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             onClick={prevPeriod}
             aria-label="Previous period"
             title="Previous period"
-            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] transition-colors cursor-pointer"
+            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] transition-colors cursor-pointer"
           >
             <ChevronLeft className="h-5 w-5 stroke-current" strokeWidth={2} />
             <span className="sr-only">Previous period</span>
@@ -336,7 +336,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             onClick={nextPeriod}
             aria-label="Next period"
             title="Next period"
-            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] transition-colors cursor-pointer"
+            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E] transition-colors cursor-pointer"
           >
             <ChevronRight className="h-5 w-5 stroke-current" strokeWidth={2} />
             <span className="sr-only">Next period</span>
@@ -347,10 +347,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* Self-Contained Calendar Frame with Cross-Fade between Month and Week */}
       <div
         key={currentView}
-        className="flex-1 min-h-0 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs orbit-view-fade"
+        className="flex-1 min-h-0 flex flex-col rounded-2xl border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] overflow-hidden shadow-xs orbit-view-fade"
       >
-        {/* Weekday column headers */}
-        <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/80 text-center py-1.5 text-[11px] font-semibold text-slate-500 dark:text-[#A0A0B0] shrink-0">
+        {/* Weekday column headers — matching dark surface with light text, no light grey bar */}
+        <div className="grid grid-cols-7 border-b border-slate-200 dark:border-[#2E2E3A] bg-slate-50/80 dark:bg-[#1A1A22] text-center py-2 text-[11px] font-semibold text-slate-500 dark:text-[#F2F2F7] shrink-0">
           {weekDayLabels.map((day) => (
             <div key={day} className="truncate">
               {day}
@@ -360,7 +360,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
         {/* View Matrix: Month View */}
         {currentView === 'month' && (
-          <div className="flex-1 min-h-0 grid grid-cols-7 auto-rows-fr bg-white dark:bg-slate-900">
+          <div className="flex-1 min-h-0 grid grid-cols-7 auto-rows-fr bg-white dark:bg-[#1A1A22]">
             {monthDates.map(({ date, isCurrentMonth }, idx) => {
               const dateStr = date.toLocaleDateString('en-CA');
               const isToday = dateStr === todayStr;
@@ -384,16 +384,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     month: 'short',
                     day: 'numeric',
                   })}, ${dayTasks.length} tasks`}
-                  className={`relative min-h-0 p-1.5 sm:p-2 border-b border-r last:border-r-0 border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between transition-all duration-150 cursor-pointer group ${
+                  className={`relative min-h-0 p-1.5 sm:p-2 border-b border-r last:border-r-0 border-slate-200/80 dark:border-[#2E2E3A] flex flex-col justify-between transition-all duration-150 cursor-pointer group ${
                     isDropTarget
-                      ? 'ring-2 ring-inset ring-[var(--orbit-accent,#534AB7)] bg-indigo-50/80 dark:bg-[#534AB7]/25'
+                      ? 'ring-2 ring-inset ring-[var(--orbit-accent,#534AB7)] bg-indigo-50/80 dark:bg-[#8B7BFF]/20'
                       : isFocused
                       ? 'ring-1 ring-inset ring-[var(--orbit-accent,#534AB7)]/50 dark:ring-[#8B7BFF]/50'
                       : ''
                   } ${
                     isCurrentMonth
-                      ? 'bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-850/80'
-                      : 'bg-slate-50/40 dark:bg-slate-950/40 opacity-45 hover:opacity-80'
+                      ? 'bg-white dark:bg-[#1A1A22] hover:bg-slate-50/80 dark:hover:bg-[#24242E]'
+                      : 'bg-slate-50/40 dark:bg-[#0F0F14]/60 dark:text-[#6E6E80] opacity-50 hover:opacity-75'
                   }`}
                 >
                   {/* Date Number Header */}
@@ -401,8 +401,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     <span
                       className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-mono tabular-nums ${
                         isToday
-                          ? 'bg-[var(--orbit-accent,#534AB7)] font-bold text-white'
-                          : 'text-slate-700 dark:text-[#F2F2F7] group-hover:font-semibold'
+                          ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] dark:text-[#0F0F14] font-bold text-white'
+                          : isCurrentMonth
+                          ? 'text-slate-700 dark:text-[#F2F2F7] group-hover:font-semibold'
+                          : 'text-slate-400 dark:text-[#6E6E80]'
                       }`}
                     >
                       {date.getDate()}
@@ -452,9 +454,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   {isHovered && (
                     <div
                       role="tooltip"
-                      className="hidden md:block pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-40 w-52 p-2.5 rounded-xl bg-slate-900/95 dark:bg-[#1E1E26] text-white border border-slate-700 shadow-xl space-y-1.5 orbit-view-fade"
+                      className="hidden md:block pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-40 w-52 p-2.5 rounded-xl bg-slate-900/95 dark:bg-[#1A1A22] text-white dark:text-[#F2F2F7] border border-slate-700 dark:border-[#2E2E3A] shadow-xl space-y-1.5 orbit-view-fade"
                     >
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#A0A0B0] flex items-center justify-between">
                         <span>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
@@ -464,13 +466,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         {dayTasks.slice(0, 4).map((t) => (
                           <div key={t.id} className="flex items-center justify-between gap-2 text-[11px]">
                             <span className="truncate font-medium">{t.title}</span>
-                            <span className="font-mono text-[10px] text-slate-300 shrink-0">
+                            <span className="font-mono text-[10px] text-slate-300 dark:text-[#A0A0B0] shrink-0">
                               {formatTimeDisplay(t.dueTime, timeFormat)}
                             </span>
                           </div>
                         ))}
                         {dayTasks.length > 4 && (
-                          <div className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-slate-400 dark:text-[#A0A0B0]">
                             +{dayTasks.length - 4} more...
                           </div>
                         )}
@@ -485,7 +487,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
         {/* View Matrix: Week View */}
         {currentView === 'week' && (
-          <div className="flex-1 min-h-0 grid grid-cols-7 bg-white dark:bg-slate-900">
+          <div className="flex-1 min-h-0 grid grid-cols-7 bg-white dark:bg-[#1A1A22]">
             {weekDates.map((date, idx) => {
               const dateStr = date.toLocaleDateString('en-CA');
               const isToday = dateStr === todayStr;
@@ -502,20 +504,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     setDragOverDateStr((prev) => (prev === dateStr ? null : prev))
                   }
                   onDrop={(e) => handleDropOnDay(e, dateStr)}
-                  className={`min-h-0 p-2 border-r last:border-r-0 border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-start hover:bg-slate-50/80 dark:hover:bg-slate-850/80 transition-all duration-150 cursor-pointer group overflow-hidden ${
+                  className={`min-h-0 p-2 border-r last:border-r-0 border-slate-200/80 dark:border-[#2E2E3A] flex flex-col justify-start hover:bg-slate-50/80 dark:hover:bg-[#24242E] transition-all duration-150 cursor-pointer group overflow-hidden ${
                     isDropTarget
-                      ? 'ring-2 ring-inset ring-[var(--orbit-accent,#534AB7)] bg-indigo-50/80 dark:bg-[#534AB7]/25'
+                      ? 'ring-2 ring-inset ring-[var(--orbit-accent,#534AB7)] bg-indigo-50/80 dark:bg-[#8B7BFF]/20'
                       : isFocused
                       ? 'ring-1 ring-inset ring-[var(--orbit-accent,#534AB7)]/50 dark:ring-[#8B7BFF]/50'
                       : ''
                   }`}
                 >
                   {/* Date header */}
-                  <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                  <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100 dark:border-[#2E2E3A] shrink-0">
                     <span
                       className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-mono tabular-nums ${
                         isToday
-                          ? 'bg-[var(--orbit-accent,#534AB7)] font-bold text-white'
+                          ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] dark:text-[#0F0F14] font-bold text-white'
                           : 'text-slate-800 dark:text-[#F2F2F7] group-hover:font-semibold'
                       }`}
                     >

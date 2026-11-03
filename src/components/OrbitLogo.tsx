@@ -41,13 +41,19 @@ export const OrbitLogo: React.FC<OrbitLogoProps> = ({
         iconBg: 'transparent',
       };
     }
-    if (theme === 'dark') {
+    const isDark =
+      theme === 'dark' ||
+      (theme === 'light' &&
+        typeof document !== 'undefined' &&
+        document.documentElement.classList.contains('dark'));
+
+    if (isDark) {
       return {
-        centerCircle: softLavender,
+        centerCircle: '#8B7BFF',
         ring: lightPurple,
-        dot: '#FFFFFF',
-        text: '#FFFFFF',
-        iconBg: deepPurple,
+        dot: '#F2F2F7',
+        text: '#F2F2F7',
+        iconBg: '#1A1A22',
       };
     }
     // light default

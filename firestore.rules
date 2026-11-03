@@ -29,7 +29,7 @@ service cloud.firestore {
         && (!('photoURL' in data) || (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 512)))
         && (!('activePairId' in data) || (data.activePairId == null || (data.activePairId is string && data.activePairId.size() <= 128)))
         && (!('activeTeamId' in data) || (data.activeTeamId == null || (data.activeTeamId is string && data.activeTeamId.size() <= 128)))
-        && (!('preferredView' in data) || (data.preferredView in ['home', 'calendar', 'tasks', 'entities', 'team', 'list', 'month', 'week']))
+        && (!('preferredView' in data) || (data.preferredView in ['home', 'calendar', 'tasks', 'storage', 'entities', 'team', 'list', 'month', 'week']))
         && (!('personas' in data) || (data.personas is list && data.personas.size() <= 5))
         && (!('theme' in data) || (data.theme in ['light', 'dark', 'system']))
         && (!('accentColor' in data) || (data.accentColor in ['purple', 'blue', 'green', 'orange', 'pink', 'red']))
@@ -99,6 +99,50 @@ service cloud.firestore {
         && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
     }
 
+    // Validation helper for Storage Section
+    function isValidStorageSection(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'scope', 'createdBy'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && data.category in ['brand_assets', 'deliverables', 'briefs_docs', 'study_notes', 'cloud_links', 'media_exports', 'custom']
+        && data.scope in ['solo', 'pair', 'team']
+        && data.createdBy is string && data.createdBy.size() <= 128
+        && (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 500))
+        && (!('color' in data) || data.color in ['purple', 'blue', 'emerald', 'amber', 'pink', 'slate'])
+        && (!('userId' in data) || data.userId == null || (data.userId is string && data.userId.size() <= 128))
+        && (!('pairId' in data) || data.pairId == null || (data.pairId is string && data.pairId.size() <= 128))
+        && (!('teamId' in data) || data.teamId == null || (data.teamId is string && data.teamId.size() <= 128))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Validation helper for Storage Item
+    function isValidStorageItem(data) {
+      return data.keys().hasAll(['id', 'sectionId', 'name', 'type', 'scope', 'uploadedByUid'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+        && data.sectionId is string && data.sectionId.size() > 0 && data.sectionId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.type is string && data.type.size() <= 120
+        && data.scope in ['solo', 'pair', 'team']
+        && data.uploadedByUid is string && data.uploadedByUid.size() <= 128
+        && (!('url' in data) || data.url == null || (data.url is string && data.url.size() <= 850000))
+        && (!('size' in data) || (data.size is number && data.size >= 0))
+        && (!('storagePath' in data) || data.storagePath == null || (data.storagePath is string && data.storagePath.size() <= 500))
+        && (!('isLink' in data) || data.isLink is bool)
+        && (!('isNote' in data) || data.isNote is bool)
+        && (!('noteContent' in data) || data.noteContent == null || (data.noteContent is string && data.noteContent.size() <= 10000))
+        && (!('brand' in data) || data.brand == null || (data.brand is string && data.brand.size() <= 120))
+        && (!('pinned' in data) || data.pinned is bool)
+        && (!('linkedTaskId' in data) || data.linkedTaskId == null || (data.linkedTaskId is string && data.linkedTaskId.size() <= 128))
+        && (!('linkedTaskTitle' in data) || data.linkedTaskTitle == null || (data.linkedTaskTitle is string && data.linkedTaskTitle.size() <= 200))
+        && (!('userId' in data) || data.userId == null || (data.userId is string && data.userId.size() <= 128))
+        && (!('pairId' in data) || data.pairId == null || (data.pairId is string && data.pairId.size() <= 128))
+        && (!('teamId' in data) || data.teamId == null || (data.teamId is string && data.teamId.size() <= 128))
+        && (!('uploadedBy' in data) || data.uploadedBy == null || (data.uploadedBy is string && data.uploadedBy.size() <= 128))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
     // Helper functions for Pair
     function getPair(pairId) {
       return get(/databases/$(database)/documents/pairs/$(pairId)).data;
@@ -138,7 +182,7 @@ service cloud.firestore {
       );
     }
 
-    // 1. User Profiles & Solo Tasks Collection
+    // 1. User Profiles, Solo Tasks & Solo Storage Collections
     match /users/{userId} {
       allow get: if isSignedIn() && request.auth.uid == userId;
       allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
@@ -152,6 +196,22 @@ service cloud.firestore {
         allow get, list: if isSignedIn() && request.auth.uid == userId;
         allow create: if isSignedIn() && request.auth.uid == userId && incoming().createdBy == request.auth.uid && isValidTask(incoming());
         allow update: if isSignedIn() && request.auth.uid == userId && isValidTask(incoming()) && incoming().createdBy == existing().createdBy;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Solo Storage Sections Subcollection
+      match /storageSections/{sectionId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && incoming().createdBy == request.auth.uid && isValidStorageSection(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidStorageSection(incoming()) && incoming().createdBy == existing().createdBy;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Solo Storage Items Subcollection
+      match /storageItems/{itemId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && incoming().uploadedByUid == request.auth.uid && isValidStorageItem(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidStorageItem(incoming()) && incoming().uploadedByUid == existing().uploadedByUid;
         allow delete: if isSignedIn() && request.auth.uid == userId;
       }
     }
@@ -177,6 +237,22 @@ service cloud.firestore {
         allow create: if isPairMember(pairId) && incoming().createdBy == request.auth.uid && isValidTask(incoming());
         allow delete: if isPairBoss(pairId) || (isPairMember(pairId) && resource.data.createdBy == request.auth.uid);
         allow update: if isPairMember(pairId) && isValidTask(incoming()) && incoming().createdBy == existing().createdBy;
+      }
+
+      // Collaborative Pair Storage Sections Subcollection
+      match /storageSections/{sectionId} {
+        allow get, list: if isPairMember(pairId);
+        allow create: if isPairMember(pairId) && incoming().createdBy == request.auth.uid && isValidStorageSection(incoming());
+        allow update: if isPairMember(pairId) && isValidStorageSection(incoming()) && incoming().createdBy == existing().createdBy;
+        allow delete: if isPairBoss(pairId) || (isPairMember(pairId) && resource.data.createdBy == request.auth.uid);
+      }
+
+      // Collaborative Pair Storage Items Subcollection
+      match /storageItems/{itemId} {
+        allow get, list: if isPairMember(pairId);
+        allow create: if isPairMember(pairId) && incoming().uploadedByUid == request.auth.uid && isValidStorageItem(incoming());
+        allow update: if isPairMember(pairId) && isValidStorageItem(incoming()) && incoming().uploadedByUid == existing().uploadedByUid;
+        allow delete: if isPairBoss(pairId) || (isPairMember(pairId) && resource.data.uploadedByUid == request.auth.uid);
       }
     }
 
@@ -216,6 +292,22 @@ service cloud.firestore {
         allow create: if isTeamMember(teamId) && incoming().createdBy == request.auth.uid && isValidTask(incoming());
         allow update: if isTeamMember(teamId) && isValidTask(incoming()) && incoming().createdBy == existing().createdBy;
         allow delete: if isTeamOwnerOrAdmin(teamId) || (isTeamMember(teamId) && resource.data.createdBy == request.auth.uid);
+      }
+
+      // Team Storage Sections Subcollection
+      match /storageSections/{sectionId} {
+        allow get, list: if isTeamMember(teamId);
+        allow create: if isTeamMember(teamId) && incoming().createdBy == request.auth.uid && isValidStorageSection(incoming());
+        allow update: if isTeamMember(teamId) && isValidStorageSection(incoming()) && incoming().createdBy == existing().createdBy;
+        allow delete: if isTeamOwnerOrAdmin(teamId) || (isTeamMember(teamId) && resource.data.createdBy == request.auth.uid);
+      }
+
+      // Team Storage Items Subcollection
+      match /storageItems/{itemId} {
+        allow get, list: if isTeamMember(teamId);
+        allow create: if isTeamMember(teamId) && incoming().uploadedByUid == request.auth.uid && isValidStorageItem(incoming());
+        allow update: if isTeamMember(teamId) && isValidStorageItem(incoming()) && incoming().uploadedByUid == existing().uploadedByUid;
+        allow delete: if isTeamOwnerOrAdmin(teamId) || (isTeamMember(teamId) && resource.data.uploadedByUid == request.auth.uid);
       }
 
       // Team Single-Use 24h Invites Subcollection

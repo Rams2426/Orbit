@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOrbit } from '../context/OrbitContext';
 import { OrbitLogo } from './OrbitLogo';
-import { PersonaType, ThemeMode } from '../types/orbit';
+import { PWAInstallButton } from './PWAInstallButton';
+import { ThemeMode } from '../types/orbit';
 import {
   LayoutDashboard,
   Calendar,
@@ -25,8 +26,6 @@ export type SidebarTab = 'home' | 'calendar' | 'tasks' | 'team';
 interface SidebarProps {
   currentTab: SidebarTab;
   onSelectTab: (tab: SidebarTab) => void;
-  selectedContentType: string;
-  onSelectContentType: (type: string) => void;
   onOpenNewTask: () => void;
   onOpenSettings: () => void;
   isCollapsed: boolean;
@@ -35,31 +34,9 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
-interface TypeLegendItem {
-  label: string;
-  dotClass: string;
-  domain: PersonaType;
-}
-
-const DESIGNER_TYPES: TypeLegendItem[] = [
-  { label: 'Reel', dotClass: 'bg-violet-500', domain: 'designer' },
-  { label: 'Post', dotClass: 'bg-sky-500', domain: 'designer' },
-  { label: 'Story', dotClass: 'bg-pink-500', domain: 'designer' },
-  { label: 'Carousel', dotClass: 'bg-amber-500', domain: 'designer' },
-];
-
-const STUDENT_TYPES: TypeLegendItem[] = [
-  { label: 'Assignment', dotClass: 'bg-emerald-500', domain: 'student' },
-  { label: 'Exam', dotClass: 'bg-rose-500', domain: 'student' },
-  { label: 'Class', dotClass: 'bg-teal-500', domain: 'student' },
-  { label: 'Study', dotClass: 'bg-indigo-500', domain: 'student' },
-];
-
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onSelectTab,
-  selectedContentType,
-  onSelectContentType,
   onOpenNewTask,
   onOpenSettings,
   isCollapsed,
@@ -69,7 +46,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const {
     currentUser,
-    userProfile,
     tasks,
     team,
     teamMembers,
@@ -79,15 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   } = useOrbit();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement | null>(null);
-
-  // Personas from user profile
-  const personas: PersonaType[] = userProfile?.personas?.length
-    ? userProfile.personas
-    : ['designer'];
-  const hasDesigner = personas.includes('designer');
-  const hasStudent = personas.includes('student');
-  const hasBoth = hasDesigner && hasStudent;
+  const desktopUserMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Count badges
   const pendingTasksCount = tasks.filter((t) => t.status !== 'done').length;
@@ -96,7 +65,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Close user menu on outside click or Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inDesktopMenu = desktopUserMenuRef.current?.contains(target) ?? false;
+      const inMobileMenu = mobileUserMenuRef.current?.contains(target) ?? false;
+      if (!inDesktopMenu && !inMobileMenu) {
         setShowUserMenu(false);
       }
     };
@@ -149,52 +121,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onCloseMobile();
   };
 
-  const handleTypeClick = (typeLabel: string) => {
-    if (selectedContentType === typeLabel) {
-      onSelectContentType('all');
-    } else {
-      onSelectContentType(typeLabel);
-    }
-    onCloseMobile();
-  };
-
-  const renderTypeButton = (item: TypeLegendItem, compact: boolean) => {
-    const isSelected = selectedContentType === item.label;
-    return (
-      <button
-        key={`${item.domain}-${item.label}`}
-        type="button"
-        onClick={() => handleTypeClick(item.label)}
-        title={`Filter by ${item.label}`}
-        aria-pressed={isSelected}
-        className={`w-full min-h-[40px] flex items-center ${
-          compact ? 'justify-center px-2' : 'justify-between px-3'
-        } py-2 rounded-[12px] text-xs font-medium transition-colors cursor-pointer ${
-          isSelected
-            ? 'bg-[var(--orbit-accent,#534AB7)]/15 text-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF]/20 dark:text-[#8B7BFF] font-semibold ring-1 ring-[var(--orbit-accent,#534AB7)]/30 dark:ring-[#8B7BFF]/40'
-            : 'text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-200/70 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E]'
-        }`}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.dotClass}`} />
-          {!compact && <span className="truncate">{item.label}</span>}
-        </div>
-        {!compact && isSelected && (
-          <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-            Active
-          </span>
-        )}
-      </button>
-    );
-  };
-
   const renderSidebarContent = (compact: boolean, isMobileDrawer: boolean) => (
     <div className="flex flex-col h-full select-none">
       {/* 1. Top: Orbit Logo + Sleek Capsule / Floating Edge Collapse Toggle */}
       <div
         className={`relative flex items-center ${
           compact ? 'justify-center px-2' : 'justify-between px-4'
-        } h-16 border-b border-slate-200/80 dark:border-slate-800/80 shrink-0`}
+        } h-16 border-b border-slate-200/80 dark:border-[#2E2E3A] shrink-0`}
       >
         {!compact ? (
           <div className="flex items-center gap-2.5 min-w-0">
@@ -228,9 +161,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleCollapse}
             title="Collapse sidebar"
             aria-label="Collapse sidebar"
-            className="group relative flex items-center gap-1 h-8 px-2.5 rounded-full border border-slate-200/90 dark:border-slate-700/80 bg-white/90 dark:bg-[#1E1E26] text-slate-600 dark:text-[#A0A0B0] shadow-2xs hover:border-[var(--orbit-accent,#534AB7)]/50 dark:hover:border-[#8B7BFF]/50 hover:text-[var(--orbit-accent,#534AB7)] dark:hover:text-[#8B7BFF] hover:shadow-xs active:scale-95 transition-all duration-150 cursor-pointer"
+            className="group relative flex items-center gap-1 h-8 px-2.5 rounded-full border border-slate-200/90 dark:border-[#2E2E3A] bg-white/90 dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0] shadow-2xs hover:border-[var(--orbit-accent,#534AB7)]/50 dark:hover:border-[#8B7BFF]/50 hover:text-[var(--orbit-accent,#534AB7)] dark:hover:text-[#8B7BFF] hover:shadow-xs active:scale-95 transition-all duration-150 cursor-pointer"
           >
-            <span className="h-3 w-0.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-[var(--orbit-accent,#534AB7)] dark:group-hover:bg-[#8B7BFF] transition-colors" />
+            <span className="h-3 w-0.5 rounded-full bg-slate-300 dark:bg-[#2E2E3A] group-hover:bg-[var(--orbit-accent,#534AB7)] dark:group-hover:bg-[#8B7BFF] transition-colors" />
             <ChevronsLeft
               className="h-3.5 w-3.5 stroke-current transition-transform duration-200 group-hover:-translate-x-0.5"
               strokeWidth={2.2}
@@ -243,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleCollapse}
             title="Expand sidebar"
             aria-label="Expand sidebar"
-            className="group absolute -right-3.5 top-1/2 -translate-y-1/2 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E1E26] text-slate-600 dark:text-[#F2F2F7] shadow-md hover:border-[var(--orbit-accent,#534AB7)] dark:hover:border-[#8B7BFF] hover:text-[var(--orbit-accent,#534AB7)] dark:hover:text-[#8B7BFF] hover:scale-110 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="group absolute -right-3.5 top-1/2 -translate-y-1/2 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#F2F2F7] shadow-md hover:border-[var(--orbit-accent,#534AB7)] dark:hover:border-[#8B7BFF] hover:text-[var(--orbit-accent,#534AB7)] dark:hover:text-[#8B7BFF] hover:scale-110 active:scale-95 transition-all duration-150 cursor-pointer"
           >
             <ChevronsRight
               className="h-3.5 w-3.5 stroke-current transition-transform duration-200 group-hover:translate-x-0.5"
@@ -266,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-label="New task"
           className={`min-h-[44px] ${
             compact ? 'w-11 px-0 justify-center' : 'w-full px-4 justify-center gap-2'
-          } flex items-center rounded-[12px] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer`}
+          } flex items-center rounded-[12px] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] text-white dark:text-[#0F0F14] text-xs font-semibold shadow-xs transition-colors cursor-pointer`}
         >
           <Plus className="h-5 w-5 stroke-current shrink-0" strokeWidth={2} />
           {!compact && <span>New task</span>}
@@ -298,14 +231,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   compact ? 'justify-center px-0' : 'justify-between px-3'
                 } py-2.5 rounded-[12px] text-xs font-semibold transition-colors cursor-pointer relative ${
                   isActive
-                    ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white shadow-xs'
+                    ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] shadow-xs'
                     : 'text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-200/70 dark:hover:bg-[#24242E] active:bg-slate-200 dark:active:bg-[#24242E]'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Icon
                     className={`h-5 w-5 stroke-current shrink-0 ${
-                      isActive ? 'text-white' : 'text-slate-600 dark:text-[#A0A0B0]'
+                      isActive ? 'text-white dark:text-[#0F0F14]' : 'text-slate-600 dark:text-[#A0A0B0]'
                     }`}
                     strokeWidth={1.9}
                   />
@@ -316,8 +249,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span
                     className={`px-2 py-0.5 text-[11px] font-mono font-bold rounded-full tabular-nums ${
                       isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-200/90 text-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7]'
+                        ? 'bg-white/20 text-white dark:bg-[#0F0F14]/20 dark:text-[#0F0F14]'
+                        : 'bg-slate-200/90 text-slate-700 dark:bg-[#24242E] dark:text-[#F2F2F7]'
                     }`}
                   >
                     {item.badge}
@@ -331,19 +264,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
         </div>
+
+        {/* PWA Install Prompt Button */}
+        <div className="pt-2">
+          <PWAInstallButton compact={compact} variant="sidebar" />
+        </div>
       </div>
 
       {/* 5. Bottom of Sidebar: User Avatar, Name, Email + Popover Menu */}
       <div
-        className="p-3 border-t border-slate-200/80 dark:border-slate-800/80 shrink-0 relative"
-        ref={userMenuRef}
+        className="p-3 border-t border-slate-200/80 dark:border-[#2E2E3A] shrink-0 relative"
+        ref={isMobileDrawer ? mobileUserMenuRef : desktopUserMenuRef}
       >
         {showUserMenu && (
           <div
+            onClick={(e) => e.stopPropagation()}
             className={`absolute bottom-full mb-2 ${
               compact ? 'left-3 w-60' : 'left-3 right-3'
-            } rounded-[14px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E1E26] p-2 shadow-xl z-50 space-y-1.5 animate-in fade-in duration-150`}
+            } rounded-[14px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] p-2 shadow-xl z-50 space-y-1.5 animate-in fade-in duration-150`}
           >
+            {/* Install App Item (if installable) */}
+            <PWAInstallButton variant="menu" />
+
             {/* Settings Item */}
             <button
               type="button"
@@ -359,7 +301,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
 
             {/* Theme Switcher: Light / Dark / System */}
-            <div className="px-2 py-1.5 border-t border-b border-slate-100 dark:border-slate-800/80">
+            <div className="px-2 py-1.5 border-t border-b border-slate-100 dark:border-[#2E2E3A]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#A0A0B0] px-1 mb-1.5">
                 Theme
               </div>
@@ -380,7 +322,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onClick={() => setTheme(tOpt.id)}
                       className={`min-h-[36px] flex flex-col items-center justify-center gap-0.5 rounded-[8px] text-[10px] font-semibold transition-colors cursor-pointer ${
                         activeTheme
-                          ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white'
+                          ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14]'
                           : 'text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-100 dark:hover:bg-[#24242E]'
                       }`}
                     >
@@ -399,7 +341,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setShowUserMenu(false);
                 logout();
               }}
-              className="w-full min-h-[40px] flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] transition-colors cursor-pointer text-left"
+              className="w-full min-h-[40px] flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-semibold text-rose-600 dark:text-[#FF6B6B] hover:bg-rose-50 dark:hover:bg-[#24242E] transition-colors cursor-pointer text-left"
             >
               <LogOut className="h-4 w-4 stroke-current" strokeWidth={2} />
               <span>Sign out</span>
@@ -459,7 +401,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Fixed Left Sidebar (md and up) */}
       <aside
         aria-label="Main sidebar navigation"
-        className={`hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-40 border-r border-slate-200/90 dark:border-slate-800/90 bg-slate-100/90 dark:bg-[#14141A] backdrop-blur-md transition-all duration-200 ${
+        className={`hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-40 border-r border-slate-200/90 dark:border-[#2E2E3A] bg-slate-100/90 dark:bg-[#14141A] backdrop-blur-md transition-all duration-200 ${
           isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
@@ -485,7 +427,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Slide-in / Slide-out Sidebar Panel */}
         <aside
           aria-label="Mobile navigation drawer"
-          className={`relative z-10 w-72 max-w-[85vw] h-full bg-slate-100 dark:bg-[#14141A] border-r border-slate-200 dark:border-slate-800 shadow-2xl transition-transform duration-200 ease-out ${
+          className={`relative z-10 w-72 max-w-[85vw] h-full bg-slate-100 dark:bg-[#14141A] border-r border-slate-200 dark:border-[#2E2E3A] shadow-2xl transition-transform duration-200 ease-out ${
             isMobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >

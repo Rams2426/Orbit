@@ -13,6 +13,7 @@ import { TaskModal } from './components/TaskModal';
 import { TaskDetailModal } from './components/TaskDetailModal';
 import { InviteModal } from './components/InviteModal';
 import { SettingsModal } from './components/SettingsModal';
+import { OfflineIndicator } from './components/PWAInstallButton';
 import { Task, ViewMode, PersonaType } from './types/orbit';
 import { Bell, CheckCircle2, X, AlertCircle, RotateCcw, Users, Keyboard } from 'lucide-react';
 
@@ -277,9 +278,9 @@ const OrbitApp: React.FC = () => {
   // Auth loading state with skeleton placeholder
   if (loadingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0F0F14] text-slate-500 dark:text-[#A0A0B0]">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-3 border-[#534AB7] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-3 border-[#534AB7] dark:border-[#8B7BFF] border-t-transparent" />
           <p className="text-xs font-medium tracking-wide">Loading Orbit...</p>
         </div>
       </div>
@@ -292,7 +293,7 @@ const OrbitApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0F0F14] text-slate-900 dark:text-[#F2F2F7]">
       {/* 1-Hour Deadline Browser Alert Banner */}
       {activeAlertTask && (
         <div className="bg-[#534AB7] text-white px-4 py-2.5 text-xs shadow-md sticky top-0 z-50 flex items-center justify-between gap-3 animate-in slide-in-from-top duration-200">
@@ -340,8 +341,6 @@ const OrbitApp: React.FC = () => {
           <Sidebar
             currentTab={currentTab}
             onSelectTab={handleSelectTab}
-            selectedContentType={selectedContentType}
-            onSelectContentType={setSelectedContentType}
             onOpenNewTask={handleOpenNewTask}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             isCollapsed={isSidebarCollapsed}
@@ -491,11 +490,11 @@ const OrbitApp: React.FC = () => {
                 aria-modal="true"
                 aria-labelledby="shortcuts-dialog-title"
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1E1E26] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 orbit-modal-enter"
+                className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] p-6 shadow-2xl space-y-4 orbit-modal-enter"
               >
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E3A] pb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#262344] text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center">
+                    <div className="h-9 w-9 rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#8B7BFF]/20 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center">
                       <Keyboard className="h-5 w-5 stroke-current" strokeWidth={2} />
                     </div>
                     <div>
@@ -532,12 +531,12 @@ const OrbitApp: React.FC = () => {
                   ].map((item) => (
                     <div
                       key={item.key}
-                      className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70"
+                      className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-50 dark:bg-[#24242E] border border-slate-200/70 dark:border-[#2E2E3A]"
                     >
                       <span className="text-slate-700 dark:text-[#F2F2F7] font-medium">
                         {item.desc}
                       </span>
-                      <kbd className="px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] font-bold text-slate-800 dark:text-[#8B7BFF] shadow-2xs">
+                      <kbd className="px-2 py-1 rounded-md bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] font-mono text-[11px] font-bold text-slate-800 dark:text-[#8B7BFF] shadow-2xs">
                         {item.key}
                       </kbd>
                     </div>
@@ -550,8 +549,8 @@ const OrbitApp: React.FC = () => {
           {/* Join Team from QR / Invite Link Confirmation Modal */}
           {pendingTeamInviteCode && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-              <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#1E1E26] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl orbit-modal-enter">
-                <div className="h-11 w-11 rounded-xl bg-[#EEEDFE] dark:bg-[#262344] text-[#534AB7] dark:text-[#8B7BFF] flex items-center justify-center mb-4">
+              <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] p-6 shadow-2xl orbit-modal-enter">
+                <div className="h-11 w-11 rounded-xl bg-[#EEEDFE] dark:bg-[#8B7BFF]/20 text-[#534AB7] dark:text-[#8B7BFF] flex items-center justify-center mb-4">
                   <Users className="h-6 w-6 stroke-current" strokeWidth={2} />
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-[#F2F2F7]">
@@ -572,7 +571,7 @@ const OrbitApp: React.FC = () => {
                     type="button"
                     disabled={isJoiningTeamFromUrl}
                     onClick={handleConfirmJoinTeamFromUrl}
-                    className="min-h-[40px] px-4 py-2 rounded-[10px] text-xs font-semibold bg-[#534AB7] dark:bg-[#8B7BFF] hover:bg-[#433B9B] dark:hover:bg-[#7A68F0] text-white cursor-pointer transition-colors disabled:opacity-50"
+                    className="min-h-[40px] px-4 py-2 rounded-[10px] text-xs font-semibold bg-[#534AB7] dark:bg-[#8B7BFF] hover:bg-[#433B9B] dark:hover:bg-[#9B8EFF] text-white dark:text-[#0F0F14] cursor-pointer transition-colors disabled:opacity-50"
                   >
                     {isJoiningTeamFromUrl ? 'Joining...' : 'Join'}
                   </button>
@@ -588,19 +587,19 @@ const OrbitApp: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-16 md:bottom-6 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-slate-900 text-white dark:bg-[#1E1E26] dark:text-[#F2F2F7] shadow-xl border border-slate-800 dark:border-slate-700 orbit-modal-enter text-xs font-semibold backdrop-blur-md"
+          className="fixed bottom-16 md:bottom-6 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-slate-900 text-white dark:bg-[#1A1A22] dark:text-[#F2F2F7] shadow-xl border border-slate-800 dark:border-[#2E2E3A] orbit-modal-enter text-xs font-semibold backdrop-blur-md"
         >
           {toast.type === 'success' ? (
-            <CheckCircle2 className="h-5 w-5 stroke-current text-emerald-400 dark:text-emerald-400 shrink-0" strokeWidth={2} />
+            <CheckCircle2 className="h-5 w-5 stroke-current text-emerald-400 dark:text-[#4ADE80] shrink-0" strokeWidth={2} />
           ) : (
-            <AlertCircle className="h-5 w-5 stroke-current text-rose-400 dark:text-rose-400 shrink-0" strokeWidth={2} />
+            <AlertCircle className="h-5 w-5 stroke-current text-rose-400 dark:text-[#FF6B6B] shrink-0" strokeWidth={2} />
           )}
           <span>{toast.message}</span>
           {toast.undoAction && (
             <button
               type="button"
               onClick={toast.undoAction}
-              className="min-h-[34px] px-3 py-1 rounded-[8px] bg-[#534AB7] dark:bg-[#8B7BFF] text-white hover:opacity-90 flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-opacity"
+              className="min-h-[34px] px-3 py-1 rounded-[8px] bg-[#534AB7] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] hover:opacity-90 flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-opacity"
             >
               <RotateCcw className="h-3.5 w-3.5 stroke-current" strokeWidth={2} />
               <span>Undo</span>
@@ -616,6 +615,9 @@ const OrbitApp: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Offline Mode Indicator */}
+      <OfflineIndicator />
     </div>
   );
 };

@@ -18,7 +18,6 @@ import {
   X,
   Calendar as CalendarIcon,
   List as ListIcon,
-  Trash2,
   LogOut,
   Shield,
   ArrowLeft,
@@ -246,7 +245,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               type="button"
               onClick={onOpenMobileMenu}
               aria-label="Open navigation menu"
-              className="md:hidden min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[12px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer"
+              className="md:hidden min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[12px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer"
             >
               <Menu className="h-5 w-5 stroke-current" strokeWidth={2} />
             </button>
@@ -261,11 +260,11 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
           </button>
         </div>
 
-        <div className="rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs">
+        <div className="rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] p-6 sm:p-8 shadow-xs">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
             <div className="md:col-span-3 space-y-6">
               <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#534AB7]/25 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center shrink-0">
+                <div className="h-12 w-12 rounded-2xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#8B7BFF]/20 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center shrink-0">
                   <Users className="h-6 w-6 stroke-current" strokeWidth={2} />
                 </div>
                 <div>
@@ -279,7 +278,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                 </div>
               </div>
 
-              <form onSubmit={handleCreateTeam} className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <form onSubmit={handleCreateTeam} className="space-y-4 pt-2 border-t border-slate-100 dark:border-[#2E2E3A]">
                 <div>
                   <label className="block text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] mb-1.5">
                     Team name <span className="text-rose-500">*</span>
@@ -290,7 +289,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
                     placeholder="e.g. Studio North"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] dark:placeholder:text-[#A0A0B0]"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] dark:placeholder:text-[#6E6E80]"
                   />
                 </div>
 
@@ -299,7 +298,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                     type="checkbox"
                     checked={requireApproval}
                     onChange={(e) => setRequireApproval(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-[var(--orbit-accent,#534AB7)] focus:ring-[var(--orbit-accent,#534AB7)]"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-[#2E2E3A] text-[var(--orbit-accent,#534AB7)] focus:ring-[var(--orbit-accent,#534AB7)]"
                   />
                   <span>Require owner approval before new members can enter</span>
                 </label>
@@ -307,7 +306,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                 <button
                   type="submit"
                   disabled={isCreating || !newTeamName.trim()}
-                  className="min-h-[42px] px-5 py-2.5 text-xs font-semibold text-white bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] rounded-[12px] shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  className="min-h-[42px] px-5 py-2.5 text-xs font-semibold text-white dark:text-[#0F0F14] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#9B8EFF] rounded-[12px] shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4 stroke-current" strokeWidth={2.5} />
                   <span>{isCreating ? 'Creating team...' : 'Create team & get QR invite'}</span>
@@ -315,7 +314,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               </form>
 
               {/* Join existing team by code or link */}
-              <div className="pt-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              <div className="pt-5 border-t border-slate-100 dark:border-[#2E2E3A] space-y-3">
                 <h2 className="text-xs font-semibold text-slate-700 dark:text-[#F2F2F7]">
                   Have a team invite link or code?
                 </h2>
@@ -325,12 +324,12 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                     value={joinCodeInput}
                     onChange={(e) => setJoinCodeInput(e.target.value)}
                     placeholder="Paste invite link or code..."
-                    className="flex-1 px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7]"
+                    className="flex-1 px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] dark:placeholder:text-[#6E6E80]"
                   />
                   <button
                     type="submit"
                     disabled={isJoining || !joinCodeInput.trim()}
-                    className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-[10px] border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-[#F2F2F7] hover:bg-slate-200 dark:hover:bg-[#24242E] cursor-pointer disabled:opacity-50"
+                    className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-slate-100 dark:bg-[#24242E] text-slate-900 dark:text-[#F2F2F7] hover:bg-slate-200 dark:hover:bg-[#2E2E3A] cursor-pointer disabled:opacity-50"
                   >
                     {isJoining ? 'Joining...' : 'Join team'}
                   </button>
@@ -339,13 +338,13 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             </div>
 
             {/* Right Column: Instant QR Invite Preview Card */}
-            <div className="md:col-span-2 flex flex-col items-center justify-center p-5 rounded-[14px] border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50 text-center space-y-3">
+            <div className="md:col-span-2 flex flex-col items-center justify-center p-5 rounded-[14px] border border-slate-200/80 dark:border-[#2E2E3A] bg-slate-50/70 dark:bg-[#24242E] text-center space-y-3">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-[#F2F2F7]">
                 <QrCode className="h-4 w-4 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
                 <span>Team QR Invite</span>
               </div>
               {previewQrDataUrl && (
-                <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs">
+                <div className="p-3 rounded-xl bg-white border border-slate-200 dark:border-[#2E2E3A] shadow-xs">
                   <img
                     src={previewQrDataUrl}
                     alt="Team QR code preview"
@@ -369,19 +368,19 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
   return (
     <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 space-y-5 pb-24">
       {/* Team Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] shadow-xs">
         <div className="flex items-center gap-3">
           {onOpenMobileMenu && (
             <button
               type="button"
               onClick={onOpenMobileMenu}
               aria-label="Open navigation menu"
-              className="md:hidden min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[12px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer shrink-0"
+              className="md:hidden min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[12px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] cursor-pointer shrink-0"
             >
               <Menu className="h-5 w-5 stroke-current" strokeWidth={2} />
             </button>
           )}
-          <div className="h-10 w-10 rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#534AB7]/25 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center font-bold text-sm shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] dark:bg-[#8B7BFF]/20 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] flex items-center justify-center font-bold text-sm shrink-0">
             <Users className="h-5 w-5 stroke-current" strokeWidth={2} />
           </div>
           <div>
@@ -405,7 +404,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             <button
               type="button"
               onClick={() => setIsInviteOpen(true)}
-              className="min-h-[40px] px-3.5 py-2 rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[40px] px-3.5 py-2 rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <QrCode className="h-4 w-4 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
               <span>Invite</span>
@@ -417,7 +416,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             onClick={() => setIsSettingsOpen(true)}
             aria-label="Team settings"
             title="Team settings"
-            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] cursor-pointer transition-colors"
+            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] cursor-pointer transition-colors"
           >
             <Settings className="h-5 w-5 stroke-current" strokeWidth={2} />
             <span className="sr-only">Team settings</span>
@@ -428,7 +427,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             onClick={() =>
               scheduleScope === 'team' ? onOpenNewTeamTask() : onOpenNewSoloTask()
             }
-            className="min-h-[40px] px-4 py-2 rounded-[10px] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+            className="min-h-[40px] px-4 py-2 rounded-[10px] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#9B8EFF] text-xs font-semibold text-white dark:text-[#0F0F14] flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
           >
             <Plus className="h-4 w-4 stroke-current" strokeWidth={2.5} />
             <span>{scheduleScope === 'team' ? 'Add team task' : 'Add my task'}</span>
@@ -440,13 +439,13 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
           {/* My tasks / Team toggle */}
-          <div className="flex items-center p-1 rounded-[10px] bg-slate-100 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+          <div className="flex items-center p-1 rounded-[10px] bg-slate-100 dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] text-xs font-semibold">
             <button
               type="button"
               onClick={() => setScheduleScope('my')}
               className={`min-h-[36px] px-3.5 py-1.5 rounded-[8px] transition-all cursor-pointer ${
                 scheduleScope === 'my'
-                  ? 'bg-white text-slate-900 dark:bg-slate-800 dark:text-[#F2F2F7] shadow-2xs'
+                  ? 'bg-white text-slate-900 dark:bg-[#24242E] dark:text-[#F2F2F7] shadow-2xs'
                   : 'text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7]'
               }`}
             >
@@ -457,7 +456,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               onClick={() => setScheduleScope('team')}
               className={`min-h-[36px] px-3.5 py-1.5 rounded-[8px] transition-all cursor-pointer ${
                 scheduleScope === 'team'
-                  ? 'bg-[var(--orbit-accent,#534AB7)] text-white shadow-2xs'
+                  ? 'bg-[var(--orbit-accent,#534AB7)] text-white dark:bg-[#8B7BFF] dark:text-[#0F0F14] shadow-2xs font-bold'
                   : 'text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7]'
               }`}
             >
@@ -466,13 +465,13 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
           </div>
 
           {/* List / Calendar (Month / Week) toggle */}
-          <div className="flex items-center p-1 rounded-[10px] bg-slate-100 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+          <div className="flex items-center p-1 rounded-[10px] bg-slate-100 dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] text-xs font-semibold">
             <button
               type="button"
               onClick={() => setViewType('list')}
               className={`min-h-[36px] px-3 py-1.5 rounded-[8px] flex items-center gap-1.5 transition-all cursor-pointer ${
                 viewType === 'list'
-                  ? 'bg-white text-slate-900 dark:bg-slate-800 dark:text-[#F2F2F7] shadow-2xs'
+                  ? 'bg-white text-slate-900 dark:bg-[#24242E] dark:text-[#F2F2F7] shadow-2xs'
                   : 'text-slate-600 dark:text-[#A0A0B0]'
               }`}
             >
@@ -484,7 +483,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               onClick={() => setViewType('month')}
               className={`min-h-[36px] px-3 py-1.5 rounded-[8px] flex items-center gap-1.5 transition-all cursor-pointer ${
                 viewType === 'month'
-                  ? 'bg-white text-slate-900 dark:bg-slate-800 dark:text-[#F2F2F7] shadow-2xs'
+                  ? 'bg-white text-slate-900 dark:bg-[#24242E] dark:text-[#F2F2F7] shadow-2xs'
                   : 'text-slate-600 dark:text-[#A0A0B0]'
               }`}
             >
@@ -496,7 +495,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               onClick={() => setViewType('week')}
               className={`min-h-[36px] px-3 py-1.5 rounded-[8px] flex items-center gap-1.5 transition-all cursor-pointer ${
                 viewType === 'week'
-                  ? 'bg-white text-slate-900 dark:bg-slate-800 dark:text-[#F2F2F7] shadow-2xs'
+                  ? 'bg-white text-slate-900 dark:bg-[#24242E] dark:text-[#F2F2F7] shadow-2xs'
                   : 'text-slate-600 dark:text-[#A0A0B0]'
               }`}
             >
@@ -513,13 +512,13 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full pl-9 pr-8 py-2 text-xs rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-[#F2F2F7]"
+            className="w-full pl-9 pr-8 py-2 text-xs rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-900 dark:text-[#F2F2F7] placeholder:text-slate-400 dark:placeholder:text-[#6E6E80] focus:outline-none focus:border-[var(--orbit-accent,#534AB7)] dark:focus:border-[#8B7BFF]"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F2F2F7] cursor-pointer"
             >
               <X className="h-4 w-4 stroke-current" strokeWidth={2} />
             </button>
@@ -535,8 +534,8 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             onClick={() => setSelectedAssigneeFilter('all')}
             className={`min-h-[36px] px-3.5 py-1.5 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
               selectedAssigneeFilter === 'all'
-                ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF]'
-                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-[#A0A0B0]'
+                ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/20 dark:text-[#8B7BFF]'
+                : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0] dark:hover:bg-[#24242E]'
             }`}
           >
             Everyone
@@ -550,11 +549,11 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                 onClick={() => setSelectedAssigneeFilter(m.uid)}
                 className={`min-h-[36px] px-3.5 py-1.5 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                   isSelected
-                    ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF]'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-[#A0A0B0]'
+                    ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/20 dark:text-[#8B7BFF]'
+                    : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0] dark:hover:bg-[#24242E]'
                 }`}
               >
-                <span className="h-5 w-5 rounded-full bg-[var(--orbit-accent,#534AB7)] text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="h-5 w-5 rounded-full bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] text-[10px] font-bold flex items-center justify-center">
                   {m.displayName.charAt(0).toUpperCase()}
                 </span>
                 <span>{m.displayName}</span>
@@ -587,8 +586,8 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
       {/* Team QR Invite Modal */}
       {isInviteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md p-6 rounded-[16px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="w-full max-w-md p-6 rounded-[16px] bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E3A] pb-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-[#F2F2F7]">
                   Invite to {team.name}
@@ -600,6 +599,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               <button
                 type="button"
                 onClick={() => setIsInviteOpen(false)}
+                aria-label="Close invite modal"
                 className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-[#F2F2F7] cursor-pointer"
               >
                 <X className="h-5 w-5 stroke-current" strokeWidth={2} />
@@ -614,22 +614,24 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                 <button
                   type="button"
                   onClick={handleGenerateNewInvite}
-                  className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-[10px] bg-[var(--orbit-accent,#534AB7)] text-white cursor-pointer"
+                  className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-[10px] bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] cursor-pointer"
                 >
                   Generate new invite
                 </button>
               </div>
             ) : (
               <>
-                <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800">
+                <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 dark:bg-[#24242E] border border-slate-200/80 dark:border-[#2E2E3A]">
                   {qrDataUrl ? (
-                    <img
-                      src={qrDataUrl}
-                      alt="Team Invite QR Code"
-                      className="h-48 w-48 rounded-lg bg-white p-2 shadow-2xs"
-                    />
+                    <div className="p-3 rounded-xl bg-white border border-slate-200 dark:border-[#2E2E3A] shadow-xs">
+                      <img
+                        src={qrDataUrl}
+                        alt="Team Invite QR Code"
+                        className="h-44 w-44 object-contain"
+                      />
+                    </div>
                   ) : (
-                    <div className="h-48 w-48 flex items-center justify-center text-xs text-slate-400">
+                    <div className="h-44 w-44 flex items-center justify-center text-xs text-slate-400 dark:text-[#6E6E80]">
                       Generating QR...
                     </div>
                   )}
@@ -642,10 +644,10 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                   <button
                     type="button"
                     onClick={handleCopyInviteLink}
-                    className="min-h-[40px] px-3 py-2 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="min-h-[40px] px-3 py-2 rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {copiedLink ? (
-                      <Check className="h-4 w-4 stroke-current text-emerald-500" strokeWidth={2} />
+                      <Check className="h-4 w-4 stroke-current text-emerald-500 dark:text-[#4ADE80]" strokeWidth={2} />
                     ) : (
                       <Copy className="h-4 w-4 stroke-current" strokeWidth={2} />
                     )}
@@ -655,14 +657,14 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                   <button
                     type="button"
                     onClick={handleSendInviteEmail}
-                    className="min-h-[40px] px-3 py-2 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="min-h-[40px] px-3 py-2 rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-xs font-semibold text-slate-800 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Mail className="h-4 w-4 stroke-current" strokeWidth={2} />
                     <span>Send by email</span>
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-[#2E2E3A]">
                   <button
                     type="button"
                     onClick={handleRevokeCurrentInvite}
@@ -691,8 +693,8 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
       {/* Team Settings & Members Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg p-6 rounded-[16px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="w-full max-w-lg p-6 rounded-[16px] bg-white dark:bg-[#1A1A22] border border-slate-200 dark:border-[#2E2E3A] shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E3A] pb-3">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
                 <h3 className="text-base font-bold text-slate-900 dark:text-[#F2F2F7]">
@@ -702,6 +704,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(false)}
+                aria-label="Close team settings"
                 className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-[#F2F2F7] cursor-pointer"
               >
                 <X className="h-5 w-5 stroke-current" strokeWidth={2} />
@@ -719,12 +722,12 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                     type="text"
                     value={editTeamNameInput}
                     onChange={(e) => setEditTeamNameInput(e.target.value)}
-                    className="flex-1 px-3 py-2 text-xs rounded-[10px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-[#F2F2F7]"
+                    className="flex-1 px-3 py-2 text-xs rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-900 dark:text-[#F2F2F7] focus:outline-none focus:border-[#8B7BFF]"
                   />
                   <button
                     type="button"
                     onClick={() => updateTeamName(editTeamNameInput)}
-                    className="min-h-[38px] px-4 py-1.5 text-xs font-semibold rounded-[10px] bg-[var(--orbit-accent,#534AB7)] text-white cursor-pointer"
+                    className="min-h-[38px] px-4 py-1.5 text-xs font-semibold rounded-[10px] bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] cursor-pointer"
                   >
                     Save
                   </button>
@@ -748,7 +751,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                   return (
                     <div
                       key={member.uid}
-                      className="flex items-center justify-between gap-2 p-3 rounded-[10px] border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60"
+                      className="flex items-center justify-between gap-2 p-3 rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-slate-50/60 dark:bg-[#24242E]"
                     >
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900 dark:text-[#F2F2F7] truncate">
@@ -766,7 +769,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                             onChange={(e) =>
                               updateTeamMemberRole(member.uid, e.target.value as TeamRole)
                             }
-                            className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-[#F2F2F7] cursor-pointer"
+                            className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-800 dark:text-[#F2F2F7] cursor-pointer focus:outline-none"
                           >
                             <option value="member">Member</option>
                             <option value="admin">Admin</option>
@@ -782,7 +785,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                           <button
                             type="button"
                             onClick={() => removeTeamMember(member.uid)}
-                            className="min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-[#24242E] cursor-pointer"
+                            className="min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-[#2E2E3A] cursor-pointer"
                           >
                             Remove
                           </button>
@@ -795,7 +798,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
             </div>
 
             {/* Leave Team */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="pt-3 border-t border-slate-100 dark:border-[#2E2E3A] flex items-center justify-between">
               <span className="text-[11px] text-slate-500 dark:text-[#A0A0B0]">
                 {userTeamRole === 'owner' && teamMembers.length > 1
                   ? 'Transfer ownership to another member before leaving.'
@@ -811,7 +814,7 @@ export const TeamSpace: React.FC<TeamSpaceProps> = ({
                     showToast(err?.message || 'Cannot leave team', 'error');
                   }
                 }}
-                className="min-h-[38px] px-3.5 py-1.5 rounded-[10px] text-xs font-semibold text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-1.5 cursor-pointer"
+                className="min-h-[38px] px-3.5 py-1.5 rounded-[10px] text-xs font-semibold text-rose-600 dark:text-[#FF6B6B] border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-[#24242E] flex items-center gap-1.5 cursor-pointer"
               >
                 <LogOut className="h-4 w-4 stroke-current" strokeWidth={2} />
                 <span>Leave team</span>

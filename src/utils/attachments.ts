@@ -221,9 +221,22 @@ export async function compressImageIfNeeded(file: File, mimeType: string): Promi
 }
 
 /**
+ * Converts a File to a Data URL for inline Firestore fallback when needed (if file <= 580 KB).
+ */
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
  * Uploads a validated file to Firebase Storage under:
  * - users/{userId}/tasks/{taskId}/{fileName} (solo/pair tasks)
  * - teams/{teamId}/tasks/{taskId}/{fileName} (team tasks)
+ * With automatic fallback to inline data URL for compact files if Storage bucket is unavailable.
  */
 export async function uploadTaskFileToStorage(params: {
   file: File;
@@ -253,50 +266,71 @@ export async function uploadTaskFileToStorage(params: {
     ? `teams/${teamId}/tasks/${taskId}/${storageFileName}`
     : `users/${userId}/tasks/${taskId}/${storageFileName}`;
 
-  const storageRef = ref(storage, storagePath);
-  const uploadTask = uploadBytesResumable(storageRef, processedFile, {
-    contentType: finalMimeType,
-    customMetadata: {
-      uploadedBy: userId,
-      originalName: finalDisplayName,
-      taskId,
-    },
-  });
+  try {
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, processedFile, {
+      contentType: finalMimeType,
+      customMetadata: {
+        uploadedBy: userId,
+        originalName: finalDisplayName,
+        taskId,
+      },
+    });
 
-  return new Promise<TaskAttachment>((resolve, reject) => {
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        if (snapshot.totalBytes > 0 && onProgress) {
-          const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          onProgress(pct);
+    return await new Promise<TaskAttachment>((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          if (snapshot.totalBytes > 0 && onProgress) {
+            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            onProgress(pct);
+          }
+        },
+        (error) => {
+          reject(error);
+        },
+        async () => {
+          try {
+            if (onProgress) onProgress(100);
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve({
+              id: `att_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              name: finalDisplayName,
+              url: downloadUrl,
+              size: processedFile.size,
+              type: finalMimeType,
+              storagePath,
+              isLink: false,
+              uploadedBy: userDisplayName,
+              uploadedByUid: userId,
+              uploadedAt: new Date().toISOString(),
+            });
+          } catch (err) {
+            reject(err);
+          }
         }
-      },
-      (error) => {
-        reject(error);
-      },
-      async () => {
-        try {
-          if (onProgress) onProgress(100);
-          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve({
-            id: `att_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-            name: finalDisplayName,
-            url: downloadUrl,
-            size: processedFile.size,
-            type: finalMimeType,
-            storagePath,
-            isLink: false,
-            uploadedBy: userDisplayName,
-            uploadedByUid: userId,
-            uploadedAt: new Date().toISOString(),
-          });
-        } catch (err) {
-          reject(err);
-        }
-      }
-    );
-  });
+      );
+    });
+  } catch (storageErr) {
+    // Fallback for compact files (<= 580 KB) if Firebase Storage bucket rules/service reject
+    if (processedFile.size <= 580 * 1024) {
+      if (onProgress) onProgress(60);
+      const dataUrl = await fileToDataUrl(processedFile);
+      if (onProgress) onProgress(100);
+      return {
+        id: `att_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        name: finalDisplayName,
+        url: dataUrl,
+        size: processedFile.size,
+        type: finalMimeType,
+        isLink: false,
+        uploadedBy: userDisplayName,
+        uploadedByUid: userId,
+        uploadedAt: new Date().toISOString(),
+      };
+    }
+    throw storageErr;
+  }
 }
 
 /**
@@ -350,6 +384,22 @@ export function validateExternalLink(rawUrl: string): { valid: boolean; url?: st
   }
 }
 
+/**
+ * Resolves a clean display label for an external link from an optional label or URL hostname.
+ */
+export function extractLinkLabel(validUrl: string, customLabel?: string): string {
+  const trimmedLabel = customLabel?.trim();
+  if (trimmedLabel) {
+    return trimmedLabel.slice(0, 120);
+  }
+  try {
+    const u = new URL(validUrl);
+    return u.hostname.replace(/^www\./, '').slice(0, 120);
+  } catch {
+    return validUrl.slice(0, 120);
+  }
+}
+
 export function isImageAttachment(att: TaskAttachment): boolean {
   if (att.isLink || att.type === 'link') return false;
   if (att.type?.startsWith('image/')) return true;
@@ -367,3 +417,4 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
+

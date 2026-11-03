@@ -1,15 +1,7 @@
 export type PersonaType = 'designer' | 'student';
 export type Priority = 'urgent' | 'high' | 'medium' | 'low';
-export type TaskStatus =
-  | 'pending'
-  | 'todo'
-  | 'in_progress'
-  | 'submitted'
-  | 'changes_requested'
-  | 'approved'
-  | 'done';
-export type ViewMode = 'home' | 'calendar' | 'tasks' | 'entities' | 'list' | 'month' | 'week';
-export type UserRole = 'boss' | 'freelancer';
+export type TaskStatus = 'pending' | 'todo' | 'in_progress' | 'done';
+export type ViewMode = 'home' | 'calendar' | 'tasks' | 'team' | 'list' | 'month' | 'week';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type AccentColor = 'purple' | 'blue' | 'green' | 'orange' | 'pink' | 'red';
@@ -19,19 +11,6 @@ export type TimeFormat = '12h' | '24h';
 export type ReminderTime = '1h' | '1d' | '2d';
 
 export type TeamRole = 'owner' | 'admin' | 'member';
-export type AppNavTab = 'home' | 'calendar' | 'tasks';
-
-export interface UserPreferences {
-  theme: ThemeMode;
-  accentColor: AccentColor;
-  textSize: TextSize;
-  personas: PersonaType[];
-  preferredView: ViewMode;
-  weekStart: WeekStart;
-  timeFormat: TimeFormat;
-  notificationsEnabled: boolean;
-  reminderTime: ReminderTime;
-}
 
 export interface UserProfile {
   uid: string;
@@ -169,6 +148,3 @@ export interface Invite {
   acceptedByUid: string | null;
   createdAt: string;
 }
-
-export const DESIGNER_CONTENT_TYPES = ['Reel', 'Post', 'Story', 'Carousel'];
-export const STUDENT_CONTENT_TYPES = ['Assignment', 'Exam', 'Class', 'Study'];

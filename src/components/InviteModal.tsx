@@ -97,10 +97,10 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
       <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-2xs transition-opacity" onClick={onClose} />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-8">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-[#2E2E3A] dark:bg-[#1A1A22] my-8">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#2E2E3A]">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#534AB7] dark:text-[#8B7BFF]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-[#8B7BFF]/20 text-[#534AB7] dark:text-[#8B7BFF]">
               <QrCode className="h-5 w-5 stroke-current" strokeWidth={2} />
             </div>
             <div>
@@ -130,7 +130,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
         ) : (
           <div className="py-4 space-y-5">
             {/* Security note */}
-            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-[#A0A0B0]">
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#24242E] border border-slate-100 dark:border-[#2E2E3A] text-xs text-slate-600 dark:text-[#A0A0B0]">
               <ShieldCheck className="h-5 w-5 stroke-current text-[#534AB7] dark:text-[#8B7BFF] shrink-0 mt-0.5" strokeWidth={2} />
               <span>
                 Once connected, your partner can view and add deadlines directly to your schedule. Your personal tasks remain yours.
@@ -147,12 +147,12 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
                   type="text"
                   readOnly
                   value={inviteUrl}
-                  className="flex-1 px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] select-all min-h-[40px]"
+                  className="flex-1 px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 text-slate-800 dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] select-all min-h-[40px]"
                 />
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-xl bg-[#534AB7] hover:bg-[#433B9B] text-white flex items-center gap-2 transition-colors cursor-pointer shrink-0"
+                  className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-xl bg-[#534AB7] hover:bg-[#433B9B] dark:bg-[#8B7BFF] dark:hover:bg-[#9B8EFF] text-white dark:text-[#0F0F14] flex items-center gap-2 transition-colors cursor-pointer shrink-0"
                 >
                   {copied ? (
                     <Check className="h-5 w-5 stroke-current" strokeWidth={2} />
@@ -169,8 +169,8 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
             </div>
 
             {/* QR Code Container */}
-            <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850">
-              <div className="p-2 bg-white rounded-lg shadow-xs">
+            <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-[#2E2E3A] bg-slate-50/50 dark:bg-[#24242E]">
+              <div className="p-2 bg-white rounded-lg shadow-xs border border-slate-200 dark:border-[#2E2E3A]">
                 <canvas ref={canvasRef} className="block" />
               </div>
               <p className="mt-2 text-[11px] text-slate-500 dark:text-[#A0A0B0] text-center font-medium">
@@ -179,7 +179,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
             </div>
 
             {/* Email Option */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-2 border-t border-slate-100 dark:border-[#2E2E3A]">
               <label className="block text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] mb-1.5">
                 Send by Email
               </label>
@@ -189,12 +189,12 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="partner@example.com"
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#534AB7] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] dark:placeholder-[#A0A0B0] min-h-[40px]"
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#534AB7] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] dark:placeholder-[#6E6E80] min-h-[40px]"
                 />
                 <button
                   type="button"
                   onClick={handleSendEmail}
-                  className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] dark:hover:bg-[#24242E] dark:active:bg-[#24242E] flex items-center gap-2 cursor-pointer transition-colors"
+                  className="min-h-[40px] px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] dark:hover:bg-[#2E2E3A] dark:active:bg-[#2E2E3A] flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <Mail className="h-5 w-5 stroke-current" strokeWidth={2} />
                   <span>Draft Email</span>
@@ -207,7 +207,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose }) => 
         <div className="mt-2 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-[#A0A0B0] dark:hover:text-[#F2F2F7] cursor-pointer"
           >
             Done
           </button>

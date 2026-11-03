@@ -8,6 +8,7 @@ import {
   uploadTaskFileToStorage,
   deleteFileFromStorage,
   validateExternalLink,
+  extractLinkLabel,
   isImageAttachment,
   isLinkAttachment,
   formatFileSize,
@@ -77,7 +78,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     team,
     teamMembers,
     currentUser,
-    showToast,
   } = useOrbit();
 
   const userPersonas = useMemo<PersonaType[]>(
@@ -376,18 +376,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       return;
     }
 
-    let hostnameLabel = validation.url;
-    try {
-      const u = new URL(validation.url);
-      hostnameLabel = u.hostname.replace(/^www\./, '');
-    } catch {
-      // keep raw
-    }
-
-    const cleanLabel = linkLabelInput.trim() || hostnameLabel;
+    const cleanLabel = extractLinkLabel(validation.url, linkLabelInput);
     const linkAtt: TaskAttachment = {
       id: `link_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      name: cleanLabel.slice(0, 120),
+      name: cleanLabel,
       url: validation.url,
       size: 0,
       type: 'link',
@@ -578,7 +570,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           }
           touchStartYRef.current = null;
         }}
-        className="orbit-modal-enter relative w-full max-w-lg rounded-t-[20px] sm:rounded-[16px] border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-auto max-h-[92dvh] overflow-y-auto"
+        className="orbit-modal-enter relative w-full max-w-lg rounded-t-[20px] sm:rounded-[16px] border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl dark:border-[#2E2E3A] dark:bg-[#1A1A22] my-auto max-h-[92dvh] overflow-y-auto"
       >
         {/* Mobile Swipe Handle Pill */}
         <div className="sm:hidden flex justify-center -mt-1.5 mb-2.5">
@@ -586,7 +578,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2E2E3A]">
           <div>
             <h3
               id="task-modal-title"
@@ -642,7 +634,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={titlePlaceholder}
-              className="w-full px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] dark:placeholder:text-[#A0A0B0] transition-colors"
+              className="w-full px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] dark:placeholder:text-[#6E6E80] transition-colors"
             />
           </div>
 
@@ -674,8 +666,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                           onClick={() => handleSelectChip(item.type, 'designer')}
                           className={`min-h-[42px] px-2.5 py-1.5 rounded-[10px] border text-left flex items-center gap-2 cursor-pointer transition-all ${
                             isSelected
-                              ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)]'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-slate-700'
+                              ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] dark:ring-[#8B7BFF]'
+                              : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-[#2E2E3A] dark:hover:bg-[#2E2E3A]'
                           }`}
                         >
                           <Icon className="h-4 w-4 stroke-current shrink-0" strokeWidth={2} />
@@ -709,8 +701,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                           onClick={() => handleSelectChip(item.type, 'student')}
                           className={`min-h-[42px] px-2.5 py-1.5 rounded-[10px] border text-left flex items-center gap-2 cursor-pointer transition-all ${
                             isSelected
-                              ? 'border-emerald-600 bg-emerald-50 text-emerald-700 dark:border-emerald-400 dark:bg-emerald-950/30 dark:text-emerald-300 ring-1 ring-emerald-500'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-slate-700'
+                              ? 'border-emerald-600 bg-emerald-50 text-emerald-700 dark:border-[#4ADE80] dark:bg-[#4ADE80]/15 dark:text-[#4ADE80] ring-1 ring-emerald-500'
+                              : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-[#2E2E3A] dark:hover:bg-[#2E2E3A]'
                           }`}
                         >
                           <Icon className="h-4 w-4 stroke-current shrink-0" strokeWidth={2} />
@@ -741,8 +733,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       onClick={() => handleSelectChip(item.type, 'student')}
                       className={`min-h-[44px] px-2.5 py-1.5 rounded-[10px] border text-left flex items-center gap-2 cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] shadow-xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-slate-700'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] shadow-xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-[#2E2E3A] dark:hover:bg-[#2E2E3A]'
                       }`}
                     >
                       <Icon className="h-4 w-4 stroke-current shrink-0" strokeWidth={2} />
@@ -771,8 +763,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       onClick={() => handleSelectChip(item.type, 'designer')}
                       className={`min-h-[44px] px-2.5 py-1.5 rounded-[10px] border text-left flex items-center gap-2 cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] shadow-xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-slate-700'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] shadow-xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-700 dark:text-[#A0A0B0] hover:border-slate-300 dark:hover:border-[#2E2E3A] dark:hover:bg-[#2E2E3A]'
                       }`}
                     >
                       <Icon className="h-4 w-4 stroke-current shrink-0" strokeWidth={2} />
@@ -800,7 +792,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 required
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-sans tabular-nums rounded-[10px] border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] transition-colors"
+                className="w-full px-3 py-2 text-xs font-sans tabular-nums rounded-[10px] border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] transition-colors"
               />
             </div>
 
@@ -815,7 +807,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 required
                 value={dueTime}
                 onChange={(e) => setDueTime(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-sans tabular-nums rounded-[10px] border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] transition-colors"
+                className="w-full px-3 py-2 text-xs font-sans tabular-nums rounded-[10px] border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] transition-colors"
               />
             </div>
           </div>
@@ -831,33 +823,33 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   id: 'low',
                   label: 'Low',
                   baseClass:
-                    'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-[#A0A0B0]',
+                    'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0]',
                   activeClass:
-                    'border-slate-400 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-[#F2F2F7] ring-1 ring-slate-400 font-bold',
+                    'border-slate-400 bg-slate-100 dark:bg-[#2E2E3A] dark:border-[#8B7BFF] text-slate-900 dark:text-[#F2F2F7] ring-1 ring-slate-400 dark:ring-[#8B7BFF] font-bold',
                 },
                 {
                   id: 'medium',
                   label: 'Medium',
                   baseClass:
-                    'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-[#A0A0B0]',
+                    'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0]',
                   activeClass:
-                    'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] font-bold',
+                    'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] ring-1 ring-[var(--orbit-accent,#534AB7)] dark:ring-[#8B7BFF] font-bold',
                 },
                 {
                   id: 'high',
                   label: 'High',
                   baseClass:
-                    'border-amber-200/80 bg-amber-50/40 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400',
+                    'border-amber-200/80 bg-amber-50/40 text-amber-700 dark:border-[#FFB84D]/30 dark:bg-[#FFB84D]/10 dark:text-[#FFB84D]',
                   activeClass:
-                    'border-amber-400 bg-amber-100 text-amber-900 dark:border-amber-500 dark:bg-amber-950/60 dark:text-amber-200 ring-1 ring-amber-400 font-bold shadow-2xs',
+                    'border-amber-400 bg-amber-100 text-amber-900 dark:border-[#FFB84D] dark:bg-[#FFB84D]/25 dark:text-[#FFB84D] ring-1 ring-amber-400 dark:ring-[#FFB84D] font-bold shadow-2xs',
                 },
                 {
                   id: 'urgent',
                   label: 'Urgent',
                   baseClass:
-                    'border-rose-200/80 bg-rose-50/40 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400',
+                    'border-rose-200/80 bg-rose-50/40 text-rose-700 dark:border-[#FF6B6B]/30 dark:bg-[#FF6B6B]/10 dark:text-[#FF6B6B]',
                   activeClass:
-                    'border-rose-400 bg-rose-100 text-rose-900 dark:border-rose-500 dark:bg-rose-950/60 dark:text-rose-200 ring-1 ring-rose-400 font-bold shadow-2xs',
+                    'border-rose-400 bg-rose-100 text-rose-900 dark:border-[#FF6B6B] dark:bg-[#FF6B6B]/25 dark:text-[#FF6B6B] ring-1 ring-rose-400 dark:ring-[#FF6B6B] font-bold shadow-2xs',
                 },
               ].map((p) => {
                 const isSelected = priority === p.id;
@@ -890,7 +882,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Instructions, links, or requirements..."
-              className="w-full px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] dark:placeholder:text-[#A0A0B0] leading-relaxed transition-colors resize-none"
+              className="w-full px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] dark:placeholder:text-[#6E6E80] leading-relaxed transition-colors resize-none"
             />
           </div>
 
@@ -981,12 +973,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               }}
               className={`rounded-[12px] border-2 border-dashed p-3.5 text-center transition-all cursor-pointer ${
                 isDraggingOver
-                  ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)]/60 dark:border-[#8B7BFF] dark:bg-[#534AB7]/20'
-                  : 'border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-600'
+                  ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)]/60 dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15'
+                  : 'border-slate-200 dark:border-[#2E2E3A] bg-slate-50/60 dark:bg-[#24242E]/40 hover:border-slate-300 dark:hover:border-[#8B7BFF]'
               }`}
             >
               <div className="flex flex-col items-center gap-1.5">
-                <div className="h-9 w-9 rounded-[10px] bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] shadow-2xs">
+                <div className="h-9 w-9 rounded-[10px] bg-white dark:bg-[#24242E] border border-slate-200/80 dark:border-[#2E2E3A] flex items-center justify-center text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF] shadow-2xs">
                   <Upload className="h-4 w-4 stroke-current" strokeWidth={2} />
                 </div>
                 <p className="text-xs font-semibold text-slate-800 dark:text-[#F2F2F7]">
@@ -1004,7 +996,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   <button
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
-                    className="sm:hidden min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-[#F2F2F7] flex items-center gap-1.5 cursor-pointer"
+                    className="sm:hidden min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-[11px] font-medium text-slate-700 dark:text-[#F2F2F7] flex items-center gap-1.5 cursor-pointer"
                   >
                     <Camera className="h-3.5 w-3.5 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
                     <span>Take photo</span>
@@ -1012,7 +1004,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   <button
                     type="button"
                     onClick={() => photoLibraryRef.current?.click()}
-                    className="min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] flex items-center gap-1.5 cursor-pointer"
+                    className="min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-[11px] font-medium text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] flex items-center gap-1.5 cursor-pointer"
                   >
                     <ImageIcon className="h-3.5 w-3.5 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
                     <span>Photo library</span>
@@ -1020,7 +1012,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   <button
                     type="button"
                     onClick={() => filePickerRef.current?.click()}
-                    className="min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] flex items-center gap-1.5 cursor-pointer"
+                    className="min-h-[34px] px-2.5 py-1 rounded-[8px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-[11px] font-medium text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#2E2E3A] flex items-center gap-1.5 cursor-pointer"
                   >
                     <FolderOpen className="h-3.5 w-3.5 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
                     <span>Files</span>
@@ -1031,7 +1023,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
             {/* Optional "Add a link" Inline Input Box */}
             {showAddLinkForm && (
-              <div className="p-3 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 space-y-2 orbit-task-enter">
+              <div className="p-3 rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-slate-50 dark:bg-[#24242E] space-y-2 orbit-task-enter">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-700 dark:text-[#F2F2F7]">
                     Add external link (Google Drive, Dropbox, Figma, etc.)
@@ -1051,21 +1043,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     value={linkUrlInput}
                     onChange={(e) => setLinkUrlInput(e.target.value)}
                     placeholder="https://figma.com/file/..."
-                    className="w-full px-3 py-1.5 text-xs rounded-[8px] border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-[#F2F2F7] focus:outline-none focus:border-[var(--orbit-accent,#534AB7)]"
+                    className="w-full px-3 py-1.5 text-xs rounded-[8px] border border-slate-200 bg-white text-slate-900 dark:border-[#2E2E3A] dark:bg-[#1A1A22] dark:text-[#F2F2F7] dark:placeholder-[#6E6E80] focus:outline-none focus:border-[var(--orbit-accent,#534AB7)] dark:focus:border-[#8B7BFF]"
                   />
                   <input
                     type="text"
                     value={linkLabelInput}
                     onChange={(e) => setLinkLabelInput(e.target.value)}
                     placeholder="Label (optional, e.g. Figma prototype)"
-                    className="w-full px-3 py-1.5 text-xs rounded-[8px] border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-[#F2F2F7] focus:outline-none focus:border-[var(--orbit-accent,#534AB7)]"
+                    className="w-full px-3 py-1.5 text-xs rounded-[8px] border border-slate-200 bg-white text-slate-900 dark:border-[#2E2E3A] dark:bg-[#1A1A22] dark:text-[#F2F2F7] dark:placeholder-[#6E6E80] focus:outline-none focus:border-[var(--orbit-accent,#534AB7)] dark:focus:border-[#8B7BFF]"
                   />
                 </div>
                 <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={handleAddExternalLink}
-                    className="min-h-[34px] px-3 py-1 rounded-[8px] bg-[var(--orbit-accent,#534AB7)] text-white text-xs font-semibold hover:bg-[var(--orbit-accent-hover,#433B9B)] cursor-pointer"
+                    className="min-h-[34px] px-3 py-1 rounded-[8px] bg-[var(--orbit-accent,#534AB7)] text-white dark:bg-[#8B7BFF] dark:text-[#0F0F14] text-xs font-semibold hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:hover:bg-[#7A68F0] cursor-pointer"
                   >
                     Add link
                   </button>
@@ -1198,7 +1190,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <select
                 value={assigneeUid}
                 onChange={(e) => setAssigneeUid(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-slate-700 dark:bg-slate-800 dark:text-[#F2F2F7] transition-colors cursor-pointer"
+                className="w-full px-3.5 py-2 text-xs rounded-[10px] border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--orbit-accent,#534AB7)]/30 focus:border-[var(--orbit-accent,#534AB7)] dark:border-[#2E2E3A] dark:bg-[#24242E] dark:text-[#F2F2F7] transition-colors cursor-pointer"
               >
                 {teamMembers.map((member) => (
                   <option key={member.uid} value={member.uid}>
@@ -1213,7 +1205,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Collaborative Schedule Assignment */}
           {isLinkedWithPartner && !task && !defaultIsTeamTask && (
-            <div className="p-3 rounded-[10px] border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 space-y-1.5">
+            <div className="p-3 rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-slate-50/70 dark:bg-[#24242E] space-y-1.5">
               <span className="block text-xs font-semibold text-slate-800 dark:text-[#F2F2F7]">
                 Add to schedule
               </span>
@@ -1223,8 +1215,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   onClick={() => setTargetSchedule('my')}
                   className={`min-h-[40px] px-3 py-1.5 rounded-[10px] border text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
                     targetSchedule === 'my'
-                      ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] font-bold'
-                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-[#A0A0B0]'
+                      ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] font-bold'
+                      : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0]'
                   }`}
                 >
                   <User className="h-4 w-4 stroke-current" strokeWidth={2} />
@@ -1236,8 +1228,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   onClick={() => setTargetSchedule('partner')}
                   className={`min-h-[40px] px-3 py-1.5 rounded-[10px] border text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
                     targetSchedule === 'partner'
-                      ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] font-bold'
-                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-[#A0A0B0]'
+                      ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] font-bold'
+                      : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0]'
                   }`}
                 >
                   <Users className="h-4 w-4 stroke-current" strokeWidth={2} />
@@ -1248,19 +1240,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           )}
 
           {/* Footer Actions */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+          <div className="pt-2 border-t border-slate-100 dark:border-[#2E2E3A] flex items-center justify-between gap-3">
             <div>
               {task && (
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={handleDelete}
-                    className="min-h-[40px] px-3 py-1.5 flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] rounded-[10px] cursor-pointer font-medium transition-colors"
+                    className="min-h-[40px] px-3 py-1.5 flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 dark:text-[#FF6B6B] hover:bg-rose-50 dark:hover:bg-[#24242E] active:bg-rose-100 dark:active:bg-[#24242E] rounded-[10px] cursor-pointer font-medium transition-colors"
                   >
                     <Trash2 className="h-4 w-4 stroke-current" strokeWidth={2} />
                     <span className="hidden sm:inline">Delete</span>
                   </button>
-                  <span className="text-slate-300 dark:text-slate-700">·</span>
+                  <span className="text-slate-300 dark:text-[#2E2E3A]">·</span>
                   <button
                     type="button"
                     onClick={handleDuplicate}
@@ -1286,11 +1278,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <button
                 type="submit"
                 disabled={isSaving || isAnyUploading}
-                className="min-h-[40px] px-5 py-2 text-xs font-semibold text-white bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] rounded-[10px] shadow-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="min-h-[40px] px-5 py-2 text-xs font-semibold text-white dark:text-[#0F0F14] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] rounded-[10px] shadow-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 {isSaving ? (
                   <>
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="h-4 w-4 border-2 border-white dark:border-[#0F0F14] border-t-transparent rounded-full animate-spin" />
                     <span>Saving...</span>
                   </>
                 ) : (

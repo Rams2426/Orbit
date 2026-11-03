@@ -9,9 +9,6 @@ import {
   deleteDoc,
   getDoc,
   getDocs,
-  query,
-  where,
-  limit,
 } from 'firebase/firestore';
 import {
   auth,
@@ -30,7 +27,6 @@ import {
   Invite,
   PersonaType,
   ViewMode,
-  UserRole,
   ThemeMode,
   AccentColor,
   TextSize,
@@ -41,7 +37,6 @@ import {
   TeamMember,
   TeamInvite,
   TeamRole,
-  AppNavTab,
   TaskAttachment,
   TaskComment,
   TaskActivity,
@@ -78,7 +73,6 @@ interface OrbitContextValue {
   currentUser: User | null;
   userProfile: UserProfile | null;
   activePair: Pair | null;
-  role: UserRole | null;
   tasks: Task[];
   soloTasks: Task[];
   teamTasks: Task[];
@@ -109,17 +103,9 @@ interface OrbitContextValue {
   reminderTime: ReminderTime;
   setReminderTime: (time: ReminderTime) => void;
 
-  // Navigation & Modal states
-  activeTab: AppNavTab;
-  setActiveTab: (tab: AppNavTab) => void;
+  // Modal state
   selectedTaskForDetail: Task | null;
   setSelectedTaskForDetail: (task: Task | null) => void;
-  selectedTaskToEdit: Task | null;
-  setSelectedTaskToEdit: (task: Task | null) => void;
-  isNewTaskModalOpen: boolean;
-  setIsNewTaskModalOpen: (open: boolean) => void;
-  modalDefaultDueDate?: string;
-  setModalDefaultDueDate: (date?: string) => void;
 
   // Task CRUD & Detail Actions
   createTask: (taskData: Omit<Task, 'id' | 'userId' | 'createdBy' | 'createdAt' | 'updatedAt' | 'completedAt'> & { id?: string; isSharedPairTask?: boolean; isTeamTask?: boolean }) => Promise<Task>;
@@ -150,7 +136,6 @@ interface OrbitContextValue {
   // Pairs & Invites (Solo/Pair 1:1)
   createPairAsBoss: () => Promise<string>;
   generateInvite: (pairId: string) => Promise<Invite>;
-  acceptInvite: (inviteId: string) => Promise<{ success: boolean; message: string }>;
 
   // Toast
   toast: { message: string; type: 'success' | 'error'; undoAction?: () => void } | null;
@@ -176,12 +161,8 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [activeAlertTask, setActiveAlertTask] = useState<Task | null>(null);
 
-  // Navigation & Modals
-  const [activeTab, setActiveTab] = useState<AppNavTab>('home');
+  // Task detail modal
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
-  const [selectedTaskToEdit, setSelectedTaskToEdit] = useState<Task | null>(null);
-  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
-  const [modalDefaultDueDate, setModalDefaultDueDate] = useState<string | undefined>(undefined);
 
   // Undo delete queue
   const pendingDeleteRef = useRef<PendingDelete | null>(null);
@@ -232,24 +213,64 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Apply Theme Mode (System / Dark / Light)
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else if (theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (systemDark) root.classList.add('dark');
-      else root.classList.remove('dark');
+    const updateTheme = () => {
+      let isDark = false;
+      if (theme === 'dark') {
+        isDark = true;
+      } else if (theme === 'light') {
+        isDark = false;
+      } else {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      if (isDark) {
+        root.classList.add('dark');
+        root.style.colorScheme = 'dark';
+      } else {
+        root.classList.remove('dark');
+        root.style.colorScheme = 'light';
+      }
+
+      // Sync accent variable
+      if (isDark && accentColor === 'purple') {
+        root.style.setProperty('--orbit-accent', '#8B7BFF');
+        root.style.setProperty('--orbit-accent-hover', '#7A68F0');
+        root.style.setProperty('--orbit-accent-light', 'rgba(139, 123, 255, 0.16)');
+        root.style.setProperty('--orbit-accent-text', '#8B7BFF');
+      } else {
+        const palette = ACCENT_PALETTES[accentColor] || ACCENT_PALETTES.purple;
+        root.style.setProperty('--orbit-accent', palette.primary);
+        root.style.setProperty('--orbit-accent-hover', palette.hover);
+        root.style.setProperty('--orbit-accent-light', palette.light);
+        root.style.setProperty('--orbit-accent-text', palette.text);
+      }
+    };
+
+    updateTheme();
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', updateTheme);
+      return () => mediaQuery.removeEventListener('change', updateTheme);
     }
-  }, [theme]);
+  }, [theme, accentColor]);
 
   // Apply Accent Color Variable
   useEffect(() => {
-    const palette = ACCENT_PALETTES[accentColor] || ACCENT_PALETTES.purple;
     const root = document.documentElement;
-    root.style.setProperty('--orbit-accent', palette.primary);
-    root.style.setProperty('--orbit-accent-hover', palette.hover);
-    root.style.setProperty('--orbit-accent-light', palette.light);
+    const isDark = root.classList.contains('dark');
+    if (isDark && accentColor === 'purple') {
+      root.style.setProperty('--orbit-accent', '#8B7BFF');
+      root.style.setProperty('--orbit-accent-hover', '#7A68F0');
+      root.style.setProperty('--orbit-accent-light', 'rgba(139, 123, 255, 0.16)');
+      root.style.setProperty('--orbit-accent-text', '#8B7BFF');
+    } else {
+      const palette = ACCENT_PALETTES[accentColor] || ACCENT_PALETTES.purple;
+      root.style.setProperty('--orbit-accent', palette.primary);
+      root.style.setProperty('--orbit-accent-hover', palette.hover);
+      root.style.setProperty('--orbit-accent-light', palette.light);
+      root.style.setProperty('--orbit-accent-text', palette.text);
+    }
   }, [accentColor]);
 
   // Apply Text Size Root Scale
@@ -531,14 +552,6 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => clearInterval(interval);
   }, [allTasks, notificationsEnabled, reminderTime]);
 
-  const role: UserRole | null = activePair && currentUser
-    ? activePair.bossUid === currentUser.uid
-      ? 'boss'
-      : activePair.freelancerUid === currentUser.uid
-      ? 'freelancer'
-      : null
-    : null;
-
   const loginWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
@@ -722,7 +735,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const taskId = taskData.id || `tsk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const now = new Date().toISOString();
 
-    const isShared = Boolean(taskData.isSharedPairTask && activePair && role === 'boss');
+    const isShared = Boolean(taskData.isSharedPairTask && activePair);
     const isTeam = Boolean(taskData.isTeamTask && userProfile?.activeTeamId);
 
     const taskFields: Record<string, any> = {
@@ -890,7 +903,6 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     else setSoloTasks((prev) => prev.filter((t) => t.id !== taskId));
 
     if (selectedTaskForDetail?.id === taskId) setSelectedTaskForDetail(null);
-    if (selectedTaskToEdit?.id === taskId) setSelectedTaskToEdit(null);
 
     try {
       await deleteAllTaskStorageFiles(task.attachments);
@@ -923,7 +935,6 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     else setSoloTasks((prev) => prev.filter((t) => t.id !== taskId));
 
     if (selectedTaskForDetail?.id === taskId) setSelectedTaskForDetail(null);
-    if (selectedTaskToEdit?.id === taskId) setSelectedTaskToEdit(null);
 
     // 2. Set 5-second timer
     const timer = setTimeout(async () => {
@@ -973,7 +984,6 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPairTasks((prev) => prev.filter((t) => !taskIds.includes(t.id)));
 
     if (selectedTaskForDetail && taskIds.includes(selectedTaskForDetail.id)) setSelectedTaskForDetail(null);
-    if (selectedTaskToEdit && taskIds.includes(selectedTaskToEdit.id)) setSelectedTaskToEdit(null);
 
     // Set 5-second timer
     const timer = setTimeout(async () => {
@@ -1416,59 +1426,12 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const acceptInvite = async (inviteId: string): Promise<{ success: boolean; message: string }> => {
-    if (!currentUser) return { success: false, message: 'Please sign in first.' };
-
-    try {
-      const inviteSnap = await getDoc(doc(db, 'invites', inviteId));
-      if (!inviteSnap.exists()) {
-        return { success: false, message: 'Invite link not found or expired.' };
-      }
-
-      const invData = inviteSnap.data() as Invite;
-      if (invData.accepted) {
-        return { success: false, message: 'This invite has already been accepted.' };
-      }
-
-      const now = new Date().toISOString();
-      if (invData.expiresAt < now) {
-        return { success: false, message: 'This invite has expired.' };
-      }
-
-      if (invData.bossUid === currentUser.uid) {
-        return { success: false, message: 'You created this invite for a collaborator.' };
-      }
-
-      await updateDoc(doc(db, 'pairs', invData.pairId), {
-        freelancerUid: currentUser.uid,
-        freelancerEmail: currentUser.email || '',
-        status: 'active',
-        pairedAt: now,
-      });
-
-      await updateDoc(doc(db, 'invites', inviteId), {
-        accepted: true,
-        acceptedByUid: currentUser.uid,
-      });
-
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        activePairId: invData.pairId,
-        updatedAt: now,
-      });
-
-      return { success: true, message: 'Connected to private pair!' };
-    } catch (err) {
-      return { success: false, message: err instanceof Error ? err.message : 'Failed to join' };
-    }
-  };
-
   return (
     <OrbitContext.Provider
       value={{
         currentUser,
         userProfile,
         activePair,
-        role,
         tasks: allTasks,
         soloTasks,
         teamTasks,
@@ -1499,17 +1462,9 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         reminderTime,
         setReminderTime,
 
-        // Navigation & Modals
-        activeTab,
-        setActiveTab,
+        // Modal state
         selectedTaskForDetail,
         setSelectedTaskForDetail,
-        selectedTaskToEdit,
-        setSelectedTaskToEdit,
-        isNewTaskModalOpen,
-        setIsNewTaskModalOpen,
-        modalDefaultDueDate,
-        setModalDefaultDueDate,
 
         // Tasks CRUD & Details
         createTask,
@@ -1540,7 +1495,6 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Pairs
         createPairAsBoss,
         generateInvite,
-        acceptInvite,
 
         // Toast
         toast,

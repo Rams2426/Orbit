@@ -94,11 +94,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-auto max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-[#2E2E3A] dark:bg-[#1A1A22] my-auto max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header with Title and ONLY Close (X) button at top right */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#2E2E3A] shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[#534AB7]/20 dark:text-[#8B7BFF]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF]">
               <Sliders className="h-5 w-5 stroke-current" strokeWidth={2} />
             </div>
             <div>
@@ -129,15 +129,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <User className="h-5 w-5 stroke-current text-[#534AB7] dark:text-[#8B7BFF]" strokeWidth={2} />
               <span>Profile</span>
             </h4>
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 flex items-center gap-3.5">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2E2E3A] bg-slate-50/70 dark:bg-[#24242E] flex items-center gap-3.5">
               {currentUser?.photoURL ? (
                 <img
                   src={currentUser.photoURL}
                   alt={currentUser.displayName || 'Profile'}
-                  className="h-12 w-12 rounded-full border border-slate-200 dark:border-slate-700 object-cover shrink-0"
+                  className="h-12 w-12 rounded-full border border-slate-200 dark:border-[#2E2E3A] object-cover shrink-0"
                 />
               ) : (
-                <div className="h-12 w-12 rounded-full bg-[var(--orbit-accent,#534AB7)] text-white font-bold flex items-center justify-center text-base shrink-0 shadow-xs">
+                <div className="h-12 w-12 rounded-full bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] text-white dark:text-[#0F0F14] font-bold flex items-center justify-center text-base shrink-0 shadow-xs">
                   {currentUser?.displayName?.[0] || 'O'}
                 </div>
               )}
@@ -181,8 +181,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       onClick={() => setTheme(item.id as ThemeMode)}
                       className={`min-h-[40px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#24242E] dark:hover:text-[#F2F2F7]'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] shadow-2xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#2E2E3A] dark:hover:text-[#F2F2F7]'
                       }`}
                     >
                       <Icon className="h-5 w-5 stroke-current shrink-0" strokeWidth={2} />
@@ -210,7 +210,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       style={{ backgroundColor: pal.primary }}
                       className={`h-9 w-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                         isSelected
-                          ? 'ring-3 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md scale-105'
+                          ? 'ring-3 ring-offset-2 ring-offset-white dark:ring-offset-[#1A1A22] shadow-md scale-105'
                           : 'hover:scale-105 opacity-90 hover:opacity-100'
                       }`}
                     >
@@ -243,8 +243,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       onClick={() => setTextSize(item.id as TextSize)}
                       className={`min-h-[40px] py-2 px-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#24242E] dark:hover:text-[#F2F2F7]'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] shadow-2xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#2E2E3A] dark:hover:text-[#F2F2F7]'
                       }`}
                     >
                       <div>{item.label}</div>
@@ -265,10 +265,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
             {/* What do you use Orbit for? (Checkboxes) */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] mb-1">
                 What do you use Orbit for?
               </label>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5">
+              <p className="text-[11px] text-slate-500 dark:text-[#A0A0B0] mb-2.5">
                 At least one required. Toggling enables custom fields and filter tags.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -276,8 +276,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <label
                   className={`p-3.5 rounded-xl border-2 flex items-start gap-3 cursor-pointer transition-colors ${
                     hasDesigner
-                      ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)]/40 dark:bg-[var(--orbit-accent,#534AB7)]/15'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                      ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)]/40 dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15'
+                      : 'border-slate-200 dark:border-[#2E2E3A] dark:bg-[#24242E] hover:border-slate-300'
                   }`}
                 >
                   <input
@@ -288,11 +288,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     className="mt-0.5 h-4 w-4 rounded text-[var(--orbit-accent,#534AB7)] focus:ring-[var(--orbit-accent,#534AB7)] cursor-pointer disabled:cursor-not-allowed"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-[var(--orbit-accent,#534AB7)]" />
+                    <div className="text-xs font-bold text-slate-900 dark:text-[#F2F2F7] flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" />
                       <span>Designer</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-[#A0A0B0] mt-0.5">
                       Brands, Reels, Posts, Stories, Carousels
                     </p>
                   </div>
@@ -302,8 +302,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <label
                   className={`p-3.5 rounded-xl border-2 flex items-start gap-3 cursor-pointer transition-colors ${
                     hasStudent
-                      ? 'border-emerald-600 bg-emerald-50/40 dark:border-emerald-500 dark:bg-emerald-950/20'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                      ? 'border-emerald-600 bg-emerald-50/40 dark:border-[#4ADE80] dark:bg-[#4ADE80]/15'
+                      : 'border-slate-200 dark:border-[#2E2E3A] dark:bg-[#24242E] hover:border-slate-300'
                   }`}
                 >
                   <input
@@ -314,11 +314,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     className="mt-0.5 h-4 w-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:cursor-not-allowed"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-emerald-600" />
+                    <div className="text-xs font-bold text-slate-900 dark:text-[#F2F2F7] flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-[#4ADE80]" />
                       <span>Student</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-[#A0A0B0] mt-0.5">
                       Classes, Assignments, Exams, Study Sessions
                     </p>
                   </div>
@@ -328,7 +328,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
             {/* Default View */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] mb-2">
                 Default View
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -347,8 +347,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       onClick={() => updatePreferredView(viewOption.id as ViewMode)}
                       className={`py-2 px-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[var(--orbit-accent,#534AB7)]/20 dark:text-white shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] shadow-2xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#2E2E3A]'
                       }`}
                     >
                       {viewOption.label}
@@ -360,7 +360,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
             {/* Week Starts On */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] mb-2">
                 Week Starts On
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -377,8 +377,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       onClick={() => setWeekStart(item.id as WeekStart)}
                       className={`py-2 px-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[var(--orbit-accent,#534AB7)]/20 dark:text-white shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] shadow-2xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#2E2E3A]'
                       }`}
                     >
                       {item.label}
@@ -390,8 +390,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
             {/* Time Format */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#F2F2F7] mb-2 flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-[#534AB7] dark:text-[#8B7BFF]" />
                 <span>Time Format</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -408,8 +408,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       onClick={() => setTimeFormat(item.id as TimeFormat)}
                       className={`py-2 px-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[var(--orbit-accent,#534AB7)]/20 dark:text-white shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] shadow-2xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#2E2E3A]'
                       }`}
                     >
                       <div>{item.label}</div>
@@ -429,7 +429,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </h4>
 
             {/* Toggle for Deadline Reminders */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60">
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-[#2E2E3A] bg-slate-50/70 dark:bg-[#24242E]">
               <div>
                 <span className="text-xs font-bold text-slate-900 dark:text-[#F2F2F7] block">
                   Deadline Reminders
@@ -444,11 +444,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 aria-checked={notificationsEnabled}
                 onClick={() => setNotificationsEnabled(!notificationsEnabled)}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  notificationsEnabled ? 'bg-[var(--orbit-accent,#534AB7)]' : 'bg-slate-300 dark:bg-slate-700'
+                  notificationsEnabled ? 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF]' : 'bg-slate-300 dark:bg-slate-700'
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-[#0F0F14] shadow-sm ring-0 transition duration-200 ease-in-out ${
                     notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
@@ -476,8 +476,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       onClick={() => setReminderTime(item.id as ReminderTime)}
                       className={`min-h-[40px] py-2 px-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#534AB7]/25 dark:text-[#8B7BFF] shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#24242E] dark:hover:text-[#F2F2F7]'
+                          ? 'border-[var(--orbit-accent,#534AB7)] bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:bg-[#8B7BFF]/15 dark:text-[#8B7BFF] shadow-2xs'
+                          : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#24242E] text-slate-600 dark:text-[#A0A0B0] hover:bg-slate-50 dark:hover:bg-[#2E2E3A] dark:hover:text-[#F2F2F7]'
                       }`}
                     >
                       {item.label}
@@ -489,7 +489,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </section>
 
           {/* 5. Account Section with Sign Out at the Bottom Left */}
-          <section className="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <section className="pt-2 border-t border-slate-100 dark:border-[#2E2E3A]">
             <h4 className="text-xs font-bold text-slate-400 dark:text-[#A0A0B0] uppercase tracking-wider mb-3">
               Account
             </h4>
@@ -500,7 +500,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   onClose();
                   logout();
                 }}
-                className="min-h-[40px] flex items-center gap-2 px-4 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-[#24242E] text-rose-600 dark:text-rose-400 text-xs font-semibold cursor-pointer transition-colors"
+                className="min-h-[40px] flex items-center gap-2 px-4 py-2.5 rounded-xl border border-rose-200 dark:border-[#2E2E3A] bg-rose-50 hover:bg-rose-100 dark:bg-[#24242E] dark:hover:bg-[#2E2E3A] text-rose-600 dark:text-[#FF6B6B] text-xs font-semibold cursor-pointer transition-colors"
               >
                 <LogOut className="h-5 w-5 stroke-current" strokeWidth={2} />
                 <span>Sign out</span>

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useOrbit } from '../context/OrbitContext';
 import { Task, PersonaType } from '../types/orbit';
 import { getLiveCountdown } from '../utils/smartParse';
+import { CONFETTI_DOTS } from '../utils/timeFormat';
 import { usePrefersReducedMotion } from '../utils/usePrefersReducedMotion';
 import {
   Calendar as CalendarIcon,
@@ -307,22 +308,22 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     const dueMs = new Date(`${task.dueDate}T${task.dueTime || '23:59'}`).getTime();
     if (task.dueDate < todayStr || dueMs < nowMs) {
       return {
-        borderClass: 'border-l-rose-500 orbit-overdue-pulse',
+        borderClass: 'border-l-rose-500 dark:border-l-[#FF6B6B] orbit-overdue-pulse',
         label: 'Overdue',
-        badgeBg: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400',
+        badgeBg: 'bg-rose-50 text-rose-700 dark:bg-[#FF6B6B]/15 dark:text-[#FF6B6B]',
       };
     }
     if (task.dueDate === todayStr || dueMs - nowMs <= 24 * 60 * 60 * 1000) {
       return {
-        borderClass: 'border-l-amber-500',
+        borderClass: 'border-l-amber-500 dark:border-l-[#FFB84D]',
         label: 'Due today',
-        badgeBg: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
+        badgeBg: 'bg-amber-50 text-amber-700 dark:bg-[#FFB84D]/15 dark:text-[#FFB84D]',
       };
     }
     return {
-      borderClass: 'border-l-emerald-500',
+      borderClass: 'border-l-emerald-500 dark:border-l-[#4ADE80]',
       label: 'On track',
-      badgeBg: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400',
+      badgeBg: 'bg-emerald-50 text-emerald-700 dark:bg-[#4ADE80]/15 dark:text-[#4ADE80]',
     };
   };
 
@@ -331,16 +332,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     : hasStudent
     ? 'Tasks this week'
     : 'Deliverables this week';
-
-  // Confetti burst coordinates (lightweight CSS particles < 280ms)
-  const confettiDots = [
-    { tx: '-18px', ty: '-16px', color: '#10B981' },
-    { tx: '18px', ty: '-14px', color: '#8B7BFF' },
-    { tx: '-20px', ty: '12px', color: '#F59E0B' },
-    { tx: '16px', ty: '15px', color: '#EC4899' },
-    { tx: '0px', ty: '-22px', color: '#3B82F6' },
-    { tx: '22px', ty: '2px', color: '#10B981' },
-  ];
 
   return (
     <div className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 pb-24 orbit-view-fade">
@@ -353,7 +344,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               onClick={onOpenMobileMenu}
               aria-label="Open navigation menu"
               title="Open menu"
-              className="md:hidden min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[12px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] transition-colors cursor-pointer shrink-0"
+              className="md:hidden min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[12px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-700 dark:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] transition-colors cursor-pointer shrink-0"
             >
               <Menu className="h-5 w-5 stroke-current" strokeWidth={2} />
               <span className="sr-only">Open menu</span>
@@ -387,7 +378,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={onOpenSettings}
             aria-label="Open settings"
             title="Settings"
-            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] dark:active:bg-[#24242E] transition-colors cursor-pointer"
+            className="min-w-[40px] min-h-[40px] h-10 w-10 flex items-center justify-center rounded-[10px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7] hover:bg-slate-100 dark:hover:bg-[#24242E] dark:active:bg-[#24242E] transition-colors cursor-pointer"
           >
             <Sliders className="h-5 w-5 stroke-current shrink-0" strokeWidth={2} />
             <span className="sr-only">Settings</span>
@@ -397,7 +388,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           <button
             onClick={onOpenNewTask}
             aria-label="Add task"
-            className="min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] rounded-[10px] shadow-sm transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="min-h-[40px] px-4 py-2 text-xs font-semibold text-white dark:text-[#0F0F14] bg-[var(--orbit-accent,#534AB7)] hover:bg-[var(--orbit-accent-hover,#433B9B)] dark:bg-[#8B7BFF] dark:hover:bg-[#7A68F0] rounded-[10px] shadow-sm transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
           >
             <Plus className="h-4 w-4 stroke-current shrink-0" strokeWidth={2.5} />
             <span>Add task</span>
@@ -407,12 +398,12 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
       {/* If BOTH modes are ticked: Segmented Filter */}
       {hasBoth && (
-        <div className="flex items-center gap-2 p-1 rounded-[10px] bg-slate-100 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 w-fit text-xs font-medium">
+        <div className="flex items-center gap-2 p-1 rounded-[10px] bg-slate-100 dark:bg-[#1A1A22] border border-slate-200/80 dark:border-[#2E2E3A] w-fit text-xs font-medium">
           <button
             onClick={() => setSelectedPersonaFilter('all')}
             className={`min-h-[36px] px-3.5 py-1.5 rounded-[8px] transition-all cursor-pointer ${
               selectedPersonaFilter === 'all'
-                ? 'bg-white text-slate-900 dark:bg-slate-800 dark:text-[#F2F2F7] font-bold shadow-2xs'
+                ? 'bg-white text-slate-900 dark:bg-[#24242E] dark:text-[#F2F2F7] font-bold shadow-2xs'
                 : 'text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7]'
             }`}
           >
@@ -422,7 +413,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={() => setSelectedPersonaFilter('designer')}
             className={`min-h-[36px] px-3.5 py-1.5 rounded-[8px] transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedPersonaFilter === 'designer'
-                ? 'bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[#534AB7]/30 dark:text-[#8B7BFF] font-bold shadow-2xs'
+                ? 'bg-[var(--orbit-accent-light,#EEEDFE)] text-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF]/20 dark:text-[#8B7BFF] font-bold shadow-2xs'
                 : 'text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7]'
             }`}
           >
@@ -433,7 +424,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             onClick={() => setSelectedPersonaFilter('student')}
             className={`min-h-[36px] px-3.5 py-1.5 rounded-[8px] transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedPersonaFilter === 'student'
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold shadow-2xs'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-[#4ADE80]/20 dark:text-[#4ADE80] font-bold shadow-2xs'
                 : 'text-slate-600 dark:text-[#A0A0B0] hover:text-slate-900 dark:hover:text-[#F2F2F7]'
             }`}
           >
@@ -450,32 +441,32 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3"
+                className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] space-y-3"
               >
-                <div className="h-3 w-20 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-8 w-12 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-2.5 w-24 rounded bg-slate-100 dark:bg-slate-800/70 animate-pulse" />
+                <div className="h-3 w-20 rounded bg-slate-200 dark:bg-[#24242E] animate-pulse" />
+                <div className="h-8 w-12 rounded bg-slate-200 dark:bg-[#24242E] animate-pulse" />
+                <div className="h-2.5 w-24 rounded bg-slate-100 dark:bg-[#24242E]/70 animate-pulse" />
               </div>
             ))}
           </div>
-          <div className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
-            <div className="h-3.5 w-44 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-            <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          <div className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] space-y-3">
+            <div className="h-3.5 w-44 rounded bg-slate-200 dark:bg-[#24242E] animate-pulse" />
+            <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-[#24242E] animate-pulse" />
           </div>
           <div className="space-y-2.5">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="p-4 rounded-[12px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between"
+                className="p-4 rounded-[12px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] flex items-center justify-between"
               >
                 <div className="flex items-center gap-3 w-2/3">
-                  <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0" />
+                  <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-[#24242E] animate-pulse shrink-0" />
                   <div className="space-y-2 flex-1">
-                    <div className="h-3.5 w-1/2 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                    <div className="h-2.5 w-1/3 rounded bg-slate-100 dark:bg-slate-800/70 animate-pulse" />
+                    <div className="h-3.5 w-1/2 rounded bg-slate-200 dark:bg-[#24242E] animate-pulse" />
+                    <div className="h-2.5 w-1/3 rounded bg-slate-100 dark:bg-[#24242E]/70 animate-pulse" />
                   </div>
                 </div>
-                <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-4 w-4 rounded bg-slate-200 dark:bg-[#24242E] animate-pulse" />
               </div>
             ))}
           </div>
@@ -491,8 +482,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               aria-label={`Filter by Due this week (${stats.dueThisWeek} tasks)`}
               className={`text-left p-4 sm:p-5 rounded-[16px] border transition-all cursor-pointer shadow-xs ${
                 activeStatFilter === 'due_week'
-                  ? 'border-[var(--orbit-accent,#534AB7)] ring-1 ring-[var(--orbit-accent,#534AB7)] bg-white dark:bg-slate-900'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'border-[var(--orbit-accent,#534AB7)] ring-1 ring-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] dark:ring-[#8B7BFF] bg-white dark:bg-[#1A1A22]'
+                  : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] hover:border-slate-300 dark:hover:border-[#8B7BFF]/40'
               }`}
             >
               <span className="block text-xs font-semibold text-slate-500 dark:text-[#A0A0B0]">
@@ -501,7 +492,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F2F2F7] font-sans tabular-nums">
                 {Math.round(stats.dueThisWeek * animProgress)}
               </div>
-              <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              <span className="block text-[11px] text-slate-400 dark:text-[#A0A0B0] mt-1">
                 Tap to filter tasks
               </span>
             </button>
@@ -513,17 +504,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               aria-label={`Filter by Due today (${stats.dueToday} tasks)`}
               className={`text-left p-4 sm:p-5 rounded-[16px] border transition-all cursor-pointer shadow-xs ${
                 activeStatFilter === 'due_today'
-                  ? 'border-amber-500 ring-1 ring-amber-500 bg-white dark:bg-slate-900'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-amber-300 dark:hover:border-amber-800'
+                  ? 'border-amber-500 ring-1 ring-amber-500 dark:border-[#FFB84D] dark:ring-[#FFB84D] bg-white dark:bg-[#1A1A22]'
+                  : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] hover:border-amber-300 dark:hover:border-[#FFB84D]/40'
               }`}
             >
               <span className="block text-xs font-semibold text-slate-500 dark:text-[#A0A0B0]">
                 Due today
               </span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-amber-500 dark:text-amber-400 font-sans tabular-nums">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-amber-500 dark:text-[#FFB84D] font-sans tabular-nums">
                 {Math.round(stats.dueToday * animProgress)}
               </div>
-              <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              <span className="block text-[11px] text-slate-400 dark:text-[#A0A0B0] mt-1">
                 Deliver by tonight
               </span>
             </button>
@@ -535,17 +526,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               aria-label={`Filter by Overdue (${stats.overdue} tasks)`}
               className={`text-left p-4 sm:p-5 rounded-[16px] border transition-all cursor-pointer shadow-xs ${
                 activeStatFilter === 'overdue'
-                  ? 'border-rose-500 ring-1 ring-rose-500 bg-white dark:bg-slate-900'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-rose-300 dark:hover:border-rose-800'
+                  ? 'border-rose-500 ring-1 ring-rose-500 dark:border-[#FF6B6B] dark:ring-[#FF6B6B] bg-white dark:bg-[#1A1A22]'
+                  : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] hover:border-rose-300 dark:hover:border-[#FF6B6B]/40'
               }`}
             >
               <span className="block text-xs font-semibold text-slate-500 dark:text-[#A0A0B0]">
                 Overdue
               </span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-rose-500 dark:text-rose-400 font-sans tabular-nums">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-rose-500 dark:text-[#FF6B6B] font-sans tabular-nums">
                 {Math.round(stats.overdue * animProgress)}
               </div>
-              <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              <span className="block text-[11px] text-slate-400 dark:text-[#A0A0B0] mt-1">
                 Needs resolution
               </span>
             </button>
@@ -557,24 +548,24 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               aria-label={`Filter by Completed (${stats.completedCount} tasks)`}
               className={`text-left p-4 sm:p-5 rounded-[16px] border transition-all cursor-pointer shadow-xs ${
                 activeStatFilter === 'completed'
-                  ? 'border-emerald-500 ring-1 ring-emerald-500 bg-white dark:bg-slate-900'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-emerald-300 dark:hover:border-emerald-800'
+                  ? 'border-emerald-500 ring-1 ring-emerald-500 dark:border-[#4ADE80] dark:ring-[#4ADE80] bg-white dark:bg-[#1A1A22]'
+                  : 'border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] hover:border-emerald-300 dark:hover:border-[#4ADE80]/40'
               }`}
             >
               <span className="block text-xs font-semibold text-slate-500 dark:text-[#A0A0B0] truncate">
                 Completed
               </span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-sans tabular-nums">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-[#4ADE80] font-sans tabular-nums">
                 {Math.round(stats.completedCount * animProgress)}
               </div>
-              <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+              <span className="block text-[11px] text-slate-400 dark:text-[#A0A0B0] mt-1 truncate">
                 Finished tasks
               </span>
             </button>
           </div>
 
           {/* Progress Bar: "Deliverables this week" / "Tasks this week" */}
-          <div className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-2.5">
+          <div className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] shadow-xs space-y-2.5">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-[#F2F2F7]">
               <span className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
@@ -585,7 +576,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               </span>
             </div>
 
-            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-2.5 w-full bg-slate-100 dark:bg-[#24242E] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF] rounded-full transition-all duration-250 ease-out"
                 style={{ width: `${Math.round(stats.thisWeekPercent * animProgress)}%` }}
@@ -594,7 +585,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           </div>
 
           {/* "This week" strip with 7 days, today highlighted in accent, and an "Open calendar" link */}
-          <div className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-3">
+          <div className="p-4 sm:p-5 rounded-[16px] border border-slate-200 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#A0A0B0] flex items-center gap-1.5">
                 <CalendarIcon className="h-4 w-4 stroke-current" strokeWidth={2} />
@@ -620,11 +611,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     key={d.dateStr}
                     className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-[10px] border transition-all text-center ${
                       d.isToday
-                        ? 'bg-[var(--orbit-accent,#534AB7)] text-white border-[var(--orbit-accent,#534AB7)] font-bold shadow-xs'
-                        : 'bg-slate-50 dark:bg-slate-850/60 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-[#F2F2F7]'
+                        ? 'bg-[var(--orbit-accent,#534AB7)] text-white dark:bg-[#8B7BFF] dark:text-[#0F0F14] border-[var(--orbit-accent,#534AB7)] dark:border-[#8B7BFF] font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-[#24242E] border-slate-200/80 dark:border-[#2E2E3A] text-slate-700 dark:text-[#F2F2F7]'
                     }`}
                   >
-                    <span className={`text-[10px] font-semibold uppercase ${d.isToday ? 'text-white/90' : 'text-slate-400 dark:text-[#A0A0B0]'}`}>
+                    <span className={`text-[10px] font-semibold uppercase ${d.isToday ? 'text-white/90 dark:text-[#0F0F14]/90' : 'text-slate-400 dark:text-[#A0A0B0]'}`}>
                       {d.dayName}
                     </span>
                     <span className="text-sm sm:text-base font-extrabold font-sans tabular-nums mt-0.5">
@@ -635,7 +626,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     {dayTaskCount > 0 ? (
                       <div
                         className={`mt-1 h-1.5 w-1.5 rounded-full ${
-                          d.isToday ? 'bg-amber-300' : 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF]'
+                          d.isToday ? 'bg-amber-300 dark:bg-[#0F0F14]' : 'bg-[var(--orbit-accent,#534AB7)] dark:bg-[#8B7BFF]'
                         }`}
                         title={`${dayTaskCount} deadline${dayTaskCount > 1 ? 's' : ''}`}
                       />
@@ -706,7 +697,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     <div
                       key={t.id}
                       onClick={() => setSelectedTaskForDetail(t)}
-                      className={`group relative flex items-center justify-between p-3.5 sm:p-4 rounded-[12px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all cursor-pointer border-l-4 ${
+                      className={`group relative flex items-center justify-between p-3.5 sm:p-4 rounded-[12px] border border-slate-200/90 dark:border-[#2E2E3A] bg-white dark:bg-[#1A1A22] hover:border-slate-300 dark:hover:border-[#2E2E3A] dark:hover:bg-[#24242E] hover:shadow-xs transition-all cursor-pointer border-l-4 ${
                         statusEdge.borderClass
                       } ${isCompleting ? 'orbit-task-completing' : 'orbit-task-enter'}`}
                     >
@@ -721,11 +712,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                             }}
                             title="Mark as done"
                             aria-label={`Mark ${t.title} as done`}
-                            className="min-w-[44px] min-h-[44px] h-11 w-11 flex items-center justify-center rounded-[10px] text-slate-400 hover:text-emerald-600 dark:text-[#A0A0B0] dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-[#24242E] dark:active:bg-[#24242E] cursor-pointer transition-colors"
+                            className="min-w-[44px] min-h-[44px] h-11 w-11 flex items-center justify-center rounded-[10px] text-slate-400 hover:text-emerald-600 dark:text-[#A0A0B0] dark:hover:text-[#4ADE80] hover:bg-slate-100 dark:hover:bg-[#24242E] dark:active:bg-[#24242E] cursor-pointer transition-colors"
                           >
                             {isCompleting || t.status === 'done' ? (
                               <svg
-                                className="h-5 w-5 text-emerald-500"
+                                className="h-5 w-5 text-emerald-500 dark:text-[#4ADE80]"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -733,7 +724,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                               >
-                                <circle cx="12" cy="12" r="10" className="opacity-25 fill-emerald-500/20" />
+                                <circle cx="12" cy="12" r="10" className="opacity-25 fill-emerald-500/20 dark:fill-[#4ADE80]/20" />
                                 <path d="M8 12.5l3 3 5-6" className="orbit-check-draw" />
                               </svg>
                             ) : (
@@ -745,7 +736,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                           {/* Small confetti burst when last pending task for today is finished */}
                           {confettiTaskId === t.id && (
                             <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                              {confettiDots.map((dot, idx) => (
+                              {CONFETTI_DOTS.map((dot, idx) => (
                                 <span
                                   key={idx}
                                   className="orbit-confetti-dot absolute h-1.5 w-1.5 rounded-full"
@@ -770,7 +761,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
                             {/* Deliverable Type Chip with Icon */}
                             {t.contentType && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[8px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[#F2F2F7] text-[10px] font-semibold">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[8px] bg-slate-100 dark:bg-[#24242E] dark:border dark:border-[#2E2E3A] text-slate-700 dark:text-[#F2F2F7] text-[10px] font-semibold">
                                 <TypeIcon className="h-3 w-3 stroke-current text-[var(--orbit-accent,#534AB7)] dark:text-[#8B7BFF]" strokeWidth={2} />
                                 <span>{t.contentType}</span>
                               </span>

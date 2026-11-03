@@ -14,7 +14,11 @@
           "description": "Roles chosen at onboarding: designer, student, or both"
         },
         "activePairId": { "type": "string", "maxLength": 128 },
-        "preferredView": { "type": "string", "enum": ["list", "month", "week"] },
+        "activeTeamId": { "type": "string", "maxLength": 128 },
+        "preferredView": {
+          "type": "string",
+          "enum": ["home", "calendar", "tasks", "storage", "entities", "team", "list", "month", "week"]
+        },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
@@ -28,21 +32,81 @@
         "id": { "type": "string", "maxLength": 128 },
         "userId": { "type": "string", "maxLength": 128 },
         "pairId": { "type": "string", "maxLength": 128 },
-        "title": { "type": "string", "maxLength": 140 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
         "dueDate": { "type": "string", "maxLength": 40 },
         "dueTime": { "type": "string", "maxLength": 20 },
         "priority": { "type": "string", "enum": ["urgent", "high", "medium", "low"] },
-        "notes": { "type": "string", "maxLength": 1000 },
-        "brand": { "type": "string", "maxLength": 80 },
+        "notes": { "type": "string", "maxLength": 5000 },
+        "brand": { "type": "string", "maxLength": 120 },
         "contentType": { "type": "string", "maxLength": 80 },
         "domain": { "type": "string", "enum": ["designer", "student"] },
-        "status": { "type": "string", "enum": ["pending", "done"] },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "todo", "in_progress", "submitted", "changes_requested", "approved", "done"]
+        },
         "createdBy": { "type": "string", "maxLength": 128 },
         "completedAt": { "type": "string" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
       "required": ["id", "title", "dueDate", "dueTime", "status", "createdBy"]
+    },
+    "StorageSection": {
+      "title": "StorageSection",
+      "description": "Custom storage section or folder for organizing files, deliverables, brand kits, and cloud links",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 500 },
+        "category": {
+          "type": "string",
+          "enum": ["brand_assets", "deliverables", "briefs_docs", "study_notes", "cloud_links", "media_exports", "custom"]
+        },
+        "color": {
+          "type": "string",
+          "enum": ["purple", "blue", "emerald", "amber", "pink", "slate"]
+        },
+        "scope": { "type": "string", "enum": ["solo", "pair", "team"] },
+        "userId": { "type": "string", "maxLength": 128 },
+        "pairId": { "type": "string", "maxLength": 128 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "category", "scope", "createdBy", "createdAt"]
+    },
+    "StorageItem": {
+      "title": "StorageItem",
+      "description": "File, cloud link, or vault note stored inside a Storage Section",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "sectionId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 200 },
+        "url": { "type": "string", "maxLength": 850000 },
+        "size": { "type": "number" },
+        "type": { "type": "string", "maxLength": 120 },
+        "storagePath": { "type": "string", "maxLength": 500 },
+        "isLink": { "type": "boolean" },
+        "isNote": { "type": "boolean" },
+        "noteContent": { "type": "string", "maxLength": 10000 },
+        "brand": { "type": "string", "maxLength": 120 },
+        "pinned": { "type": "boolean" },
+        "linkedTaskId": { "type": "string", "maxLength": 128 },
+        "linkedTaskTitle": { "type": "string", "maxLength": 200 },
+        "scope": { "type": "string", "enum": ["solo", "pair", "team"] },
+        "userId": { "type": "string", "maxLength": 128 },
+        "pairId": { "type": "string", "maxLength": 128 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "uploadedBy": { "type": "string", "maxLength": 128 },
+        "uploadedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "sectionId", "name", "type", "scope", "uploadedByUid", "createdAt"]
     },
     "Pair": {
       "title": "Pair",
@@ -86,6 +150,14 @@
       "schema": { "$ref": "#/entities/Task" },
       "description": "Solo personal schedule deadlines"
     },
+    "/users/{userId}/storageSections/{sectionId}": {
+      "schema": { "$ref": "#/entities/StorageSection" },
+      "description": "Personal storage sections and folders"
+    },
+    "/users/{userId}/storageItems/{itemId}": {
+      "schema": { "$ref": "#/entities/StorageItem" },
+      "description": "Personal storage files, links, and notes"
+    },
     "/pairs/{pairId}": {
       "schema": { "$ref": "#/entities/Pair" },
       "description": "Private 1-to-1 pair document"
@@ -93,6 +165,22 @@
     "/pairs/{pairId}/tasks/{taskId}": {
       "schema": { "$ref": "#/entities/Task" },
       "description": "Collaborative deadlines scheduled within the private pair"
+    },
+    "/pairs/{pairId}/storageSections/{sectionId}": {
+      "schema": { "$ref": "#/entities/StorageSection" },
+      "description": "Shared pair storage sections"
+    },
+    "/pairs/{pairId}/storageItems/{itemId}": {
+      "schema": { "$ref": "#/entities/StorageItem" },
+      "description": "Shared pair storage files, links, and notes"
+    },
+    "/teams/{teamId}/storageSections/{sectionId}": {
+      "schema": { "$ref": "#/entities/StorageSection" },
+      "description": "Shared team storage sections"
+    },
+    "/teams/{teamId}/storageItems/{itemId}": {
+      "schema": { "$ref": "#/entities/StorageItem" },
+      "description": "Shared team storage files, links, and notes"
     },
     "/invites/{inviteId}": {
       "schema": { "$ref": "#/entities/Invite" },
