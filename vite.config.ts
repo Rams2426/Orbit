@@ -12,6 +12,8 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: [
+          'favicon.ico',
+          'favicon-32x32.png',
           'icon.svg',
           'apple-touch-icon.png',
           'pwa-192x192.png',
@@ -20,7 +22,7 @@ export default defineConfig(() => {
         ],
         manifest: {
           id: '/',
-          name: 'Orbit — Personal Schedule & Deadlines',
+          name: 'Orbit',
           short_name: 'Orbit',
           description:
             'A clean, modern personal schedule and deadline app for solo use and team collaboration.',
@@ -30,6 +32,12 @@ export default defineConfig(() => {
           start_url: '/',
           scope: '/',
           icons: [
+            {
+              src: '/favicon-32x32.png',
+              sizes: '32x32',
+              type: 'image/png',
+              purpose: 'any',
+            },
             {
               src: '/pwa-192x192.png',
               sizes: '192x192',
@@ -51,8 +59,12 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+          navigateFallback: '/index.html',
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}'],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

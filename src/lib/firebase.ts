@@ -1,14 +1,71 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  doc,
+  getDocFromServer,
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(
+    app,
+    {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    },
+    firebaseConfig.firestoreDatabaseId
+  );
+} catch {
+  firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+}
+
+export const db = firestoreDb;
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+
+export async function runFirestoreWrite(
+  writePromise: Promise<unknown>,
+  operationType: OperationType,
+  path: string
+): Promise<boolean> {
+  const isOfflineNow = typeof navigator !== 'undefined' && !navigator.onLine;
+  if (isOfflineNow) {
+    writePromise.catch((err) => {
+      console.warn('Queued offline write error:', err);
+    });
+    return true;
+  }
+
+  let timedOutOffline = false;
+  const timeoutPromise = new Promise<'timeout'>((resolve) => {
+    setTimeout(() => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        timedOutOffline = true;
+        resolve('timeout');
+      }
+    }, 1200);
+  });
+
+  try {
+    const res = await Promise.race([writePromise.then(() => 'done' as const), timeoutPromise]);
+    return res === 'timeout' || timedOutOffline;
+  } catch (err) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return true;
+    }
+    handleFirestoreError(err, operationType, path);
+  }
+}
 
 export enum OperationType {
   CREATE = 'create',

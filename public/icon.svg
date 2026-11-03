@@ -1,10 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
-  <rect width="512" height="512" rx="112" fill="#1A1A22"/>
-  <g transform="translate(56, 56) scale(4)">
-    <g transform="rotate(-25 50 50)">
-      <ellipse cx="50" cy="50" rx="40" ry="17" fill="none" stroke="#AFA9EC" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="90" cy="50" r="5" fill="#F2F2F7"/>
-    </g>
-    <circle cx="50" cy="50" r="16" fill="#8B7BFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="115" fill="#F8F7FF"/>
+  <g transform="rotate(-25 256 256)">
+    <ellipse cx="256" cy="256" rx="180" ry="76" stroke="#8B7BFF" stroke-width="22" stroke-linecap="round"/>
+    <circle cx="436" cy="256" r="22" fill="#534AB7"/>
   </g>
+  <circle cx="256" cy="256" r="70" fill="#534AB7"/>
 </svg>

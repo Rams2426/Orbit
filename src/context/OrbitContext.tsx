@@ -19,6 +19,7 @@ import {
   handleFirestoreError,
   OperationType,
   removeUndefinedFields,
+  runFirestoreWrite,
 } from '../lib/firebase';
 import {
   UserProfile,
@@ -313,19 +314,37 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsubscribe();
   }, []);
 
-  // 2. Profile Listener
+  // 2. Profile Listener (with immediate offline cache hydration)
   useEffect(() => {
     if (!currentUser) return;
 
-    setLoadingData(true);
+    const profileCacheKey = `orbit_offline_profile_${currentUser.uid}`;
+    try {
+      const cached = localStorage.getItem(profileCacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached) as UserProfile;
+        setUserProfile(parsed);
+        setNeedsOnboarding(!parsed.personas || parsed.personas.length === 0);
+        setLoadingData(false);
+      } else {
+        setLoadingData(true);
+      }
+    } catch {
+      setLoadingData(true);
+    }
+
     const userDocRef = doc(db, 'users', currentUser.uid);
 
     const unsubscribe = onSnapshot(
       userDocRef,
+      { includeMetadataChanges: true },
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data() as UserProfile;
           setUserProfile(data);
+          try {
+            localStorage.setItem(profileCacheKey, JSON.stringify(data));
+          } catch {}
           setNeedsOnboarding(!data.personas || data.personas.length === 0);
           if (data.theme) {
             setThemeState(data.theme);
@@ -355,7 +374,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setReminderTimeState(data.reminderTime);
             localStorage.setItem('orbit_reminder_time', data.reminderTime);
           }
-        } else {
+        } else if (!snapshot.metadata.fromCache) {
           setUserProfile(null);
           setNeedsOnboarding(true);
         }
@@ -363,6 +382,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
       (err) => {
         setLoadingData(false);
+        if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         handleFirestoreError(err, OperationType.GET, `users/${currentUser.uid}`);
       }
     );
@@ -370,24 +390,39 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsubscribe();
   }, [currentUser]);
 
-  // 3. Solo Tasks Listener
+  // 3. Solo Tasks Listener (with immediate offline cache hydration)
   useEffect(() => {
     if (!currentUser) {
       setSoloTasks([]);
       return;
     }
 
+    const soloCacheKey = `orbit_offline_solo_${currentUser.uid}`;
+    try {
+      const cached = localStorage.getItem(soloCacheKey);
+      if (cached) {
+        setSoloTasks(JSON.parse(cached) as Task[]);
+      }
+    } catch {}
+
     const soloColRef = collection(db, 'users', currentUser.uid, 'tasks');
     const unsubscribe = onSnapshot(
       soloColRef,
+      { includeMetadataChanges: true },
       (snapshot) => {
         const tasksArr: Task[] = [];
         snapshot.forEach((docSnap) => {
           tasksArr.push(docSnap.data() as Task);
         });
-        setSoloTasks(tasksArr);
+        if (tasksArr.length > 0 || !snapshot.metadata.fromCache) {
+          setSoloTasks(tasksArr);
+          try {
+            localStorage.setItem(soloCacheKey, JSON.stringify(tasksArr));
+          } catch {}
+        }
       },
       (error) => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         handleFirestoreError(error, OperationType.LIST, `users/${currentUser.uid}/tasks`);
       }
     );
@@ -588,37 +623,41 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: now,
     };
 
+    setUserProfile(newProfile);
+    setNeedsOnboarding(false);
     try {
-      await setDoc(doc(db, 'users', currentUser.uid), newProfile);
-      setUserProfile(newProfile);
-      setNeedsOnboarding(false);
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `users/${currentUser.uid}`);
-    }
+      localStorage.setItem(`orbit_offline_profile_${currentUser.uid}`, JSON.stringify(newProfile));
+    } catch {}
+
+    await runFirestoreWrite(
+      setDoc(doc(db, 'users', currentUser.uid), newProfile),
+      OperationType.WRITE,
+      `users/${currentUser.uid}`
+    );
   };
 
   const updatePersonas = async (personas: PersonaType[]) => {
     if (!currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
+    await runFirestoreWrite(
+      updateDoc(doc(db, 'users', currentUser.uid), {
         personas,
         updatedAt: new Date().toISOString(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${currentUser.uid}`);
-    }
+      }),
+      OperationType.UPDATE,
+      `users/${currentUser.uid}`
+    );
   };
 
   const updatePreferredView = async (preferredView: ViewMode) => {
     if (!currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
+    await runFirestoreWrite(
+      updateDoc(doc(db, 'users', currentUser.uid), {
         preferredView,
         updatedAt: new Date().toISOString(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${currentUser.uid}`);
-    }
+      }),
+      OperationType.UPDATE,
+      `users/${currentUser.uid}`
+    );
   };
 
   const setTheme = (newTheme: ThemeMode) => {
@@ -792,7 +831,13 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else if (isShared) {
       setPairTasks((prev) => [newTask, ...prev.filter((t) => t.id !== taskId)]);
     } else {
-      setSoloTasks((prev) => [newTask, ...prev.filter((t) => t.id !== taskId)]);
+      setSoloTasks((prev) => {
+        const next = [newTask, ...prev.filter((t) => t.id !== taskId)];
+        try {
+          localStorage.setItem(`orbit_offline_solo_${currentUser.uid}`, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     }
 
     const path = isTeam
@@ -802,11 +847,19 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       : `users/${currentUser.uid}/tasks/${taskId}`;
 
     try {
-      await setDoc(doc(db, path), newTask);
-      showToast(`Saved "${newTask.title}" to schedule`, 'success');
+      const queuedOffline = await runFirestoreWrite(
+        setDoc(doc(db, path), newTask),
+        OperationType.CREATE,
+        path
+      );
+      showToast(
+        queuedOffline
+          ? `Saved "${newTask.title}" offline — will sync when online`
+          : `Saved "${newTask.title}" to schedule`,
+        'success'
+      );
       return newTask;
     } catch (err) {
-      // Revert optimistic update
       if (isTeam) {
         setTeamTasks((prev) => prev.filter((t) => t.id !== taskId));
       } else if (isShared) {
@@ -814,7 +867,7 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else {
         setSoloTasks((prev) => prev.filter((t) => t.id !== taskId));
       }
-      handleFirestoreError(err, OperationType.CREATE, path);
+      throw err;
     }
   };
 
@@ -854,14 +907,22 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updater = (prev: Task[]) => prev.map((t) => (t.id === taskId ? { ...t, ...sanitized } : t));
     if (target.teamId) setTeamTasks(updater);
     else if (target.pairId) setPairTasks(updater);
-    else setSoloTasks(updater);
-
-    try {
-      await updateDoc(doc(db, path), sanitized);
-      showToast('Changes saved', 'success');
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, path);
+    else {
+      setSoloTasks((prev) => {
+        const next = updater(prev);
+        try {
+          localStorage.setItem(`orbit_offline_solo_${currentUser.uid}`, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     }
+
+    const queuedOffline = await runFirestoreWrite(
+      updateDoc(doc(db, path), sanitized),
+      OperationType.UPDATE,
+      path
+    );
+    showToast(queuedOffline ? 'Saved offline — will sync when online' : 'Changes saved', 'success');
   };
 
   // Toggle Task Done
@@ -900,17 +961,27 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Optimistic removal
     if (task.teamId) setTeamTasks((prev) => prev.filter((t) => t.id !== taskId));
     else if (task.pairId) setPairTasks((prev) => prev.filter((t) => t.id !== taskId));
-    else setSoloTasks((prev) => prev.filter((t) => t.id !== taskId));
+    else {
+      setSoloTasks((prev) => {
+        const next = prev.filter((t) => t.id !== taskId);
+        try {
+          localStorage.setItem(`orbit_offline_solo_${currentUser.uid}`, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    }
 
     if (selectedTaskForDetail?.id === taskId) setSelectedTaskForDetail(null);
 
-    try {
-      await deleteAllTaskStorageFiles(task.attachments);
-      await deleteDoc(doc(db, path));
-      showToast('Task deleted', 'success');
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, path);
+    if (typeof navigator === 'undefined' || navigator.onLine) {
+      await deleteAllTaskStorageFiles(task.attachments).catch(console.error);
     }
+    const queuedOffline = await runFirestoreWrite(
+      deleteDoc(doc(db, path)),
+      OperationType.DELETE,
+      path
+    );
+    showToast(queuedOffline ? 'Deleted offline — will sync when online' : 'Task deleted', 'success');
   };
 
   // Delete Task with 5-Second Undo
@@ -923,7 +994,9 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       clearTimeout(pendingDeleteRef.current.timer);
       const flushTasks = pendingDeleteRef.current.tasks;
       flushTasks.forEach((ft) => {
-        deleteAllTaskStorageFiles(ft.attachments).catch(console.error);
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+          deleteAllTaskStorageFiles(ft.attachments).catch(console.error);
+        }
         deleteDoc(doc(db, getTaskPath(ft))).catch(console.error);
       });
       pendingDeleteRef.current = null;
@@ -932,15 +1005,27 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 1. Optimistically remove from state right away
     if (task.teamId) setTeamTasks((prev) => prev.filter((t) => t.id !== taskId));
     else if (task.pairId) setPairTasks((prev) => prev.filter((t) => t.id !== taskId));
-    else setSoloTasks((prev) => prev.filter((t) => t.id !== taskId));
+    else {
+      setSoloTasks((prev) => {
+        const next = prev.filter((t) => t.id !== taskId);
+        if (currentUser) {
+          try {
+            localStorage.setItem(`orbit_offline_solo_${currentUser.uid}`, JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
+    }
 
     if (selectedTaskForDetail?.id === taskId) setSelectedTaskForDetail(null);
 
     // 2. Set 5-second timer
     const timer = setTimeout(async () => {
       try {
-        await deleteAllTaskStorageFiles(task.attachments);
-        await deleteDoc(doc(db, getTaskPath(task)));
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+          await deleteAllTaskStorageFiles(task.attachments).catch(console.error);
+        }
+        deleteDoc(doc(db, getTaskPath(task))).catch(console.error);
       } catch (err) {
         console.error('Final task deletion failed:', err);
       } finally {
@@ -972,14 +1057,24 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (pendingDeleteRef.current) {
       clearTimeout(pendingDeleteRef.current.timer);
       pendingDeleteRef.current.tasks.forEach((ft) => {
-        deleteAllTaskStorageFiles(ft.attachments).catch(console.error);
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+          deleteAllTaskStorageFiles(ft.attachments).catch(console.error);
+        }
         deleteDoc(doc(db, getTaskPath(ft))).catch(console.error);
       });
       pendingDeleteRef.current = null;
     }
 
     // Optimistically remove from state
-    setSoloTasks((prev) => prev.filter((t) => !taskIds.includes(t.id)));
+    setSoloTasks((prev) => {
+      const next = prev.filter((t) => !taskIds.includes(t.id));
+      if (currentUser) {
+        try {
+          localStorage.setItem(`orbit_offline_solo_${currentUser.uid}`, JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
     setTeamTasks((prev) => prev.filter((t) => !taskIds.includes(t.id)));
     setPairTasks((prev) => prev.filter((t) => !taskIds.includes(t.id)));
 
@@ -989,8 +1084,10 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const timer = setTimeout(async () => {
       try {
         for (const t of tasksToDelete) {
-          await deleteAllTaskStorageFiles(t.attachments);
-          await deleteDoc(doc(db, getTaskPath(t)));
+          if (typeof navigator === 'undefined' || navigator.onLine) {
+            await deleteAllTaskStorageFiles(t.attachments).catch(console.error);
+          }
+          deleteDoc(doc(db, getTaskPath(t))).catch(console.error);
         }
       } catch (err) {
         console.error('Multi-task deletion failed:', err);
@@ -1020,7 +1117,17 @@ export const OrbitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     restored.forEach((t) => {
       if (t.teamId) setTeamTasks((prev) => [t, ...prev.filter((item) => item.id !== t.id)]);
       else if (t.pairId) setPairTasks((prev) => [t, ...prev.filter((item) => item.id !== t.id)]);
-      else setSoloTasks((prev) => [t, ...prev.filter((item) => item.id !== t.id)]);
+      else {
+        setSoloTasks((prev) => {
+          const next = [t, ...prev.filter((item) => item.id !== t.id)];
+          if (currentUser) {
+            try {
+              localStorage.setItem(`orbit_offline_solo_${currentUser.uid}`, JSON.stringify(next));
+            } catch {}
+          }
+          return next;
+        });
+      }
     });
 
     dismissToast();
