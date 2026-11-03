@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useOrbit } from '../context/OrbitContext';
 import { OrbitLogo } from './OrbitLogo';
+import { PWAInstallButton } from './PWAInstallButton';
 import { usePrefersReducedMotion } from '../utils/usePrefersReducedMotion';
 import { Sun, Moon } from 'lucide-react';
 
@@ -80,8 +81,9 @@ export const LoginScreen: React.FC = () => {
         />
       </div>
 
-      {/* Top right Theme Toggle for testing light and dark mode */}
-      <div className="absolute top-5 right-5 z-20">
+      {/* Top right Install App & Theme Toggle */}
+      <div className="absolute top-5 right-5 z-20 flex items-center gap-2.5">
+        <PWAInstallButton variant="login" />
         <button
           onClick={toggleTheme}
           className="min-h-[40px] min-w-[40px] p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-[#A0A0B0] dark:hover:text-[#F2F2F7] bg-white/70 dark:bg-[#1A1A22] border border-slate-200/80 dark:border-[#2E2E3A] dark:hover:bg-[#24242E] dark:active:bg-[#24242E] backdrop-blur-sm shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
