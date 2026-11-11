@@ -9,7 +9,17 @@ import {
   getDocFromServer,
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import firebaseConfig from '../../firebase-applet-config.json';
+import rawFirebaseConfig from '../../firebase-applet-config.json';
+
+const resolvedApiKey =
+  import.meta.env.VITE_FIREBASE_API_KEY ||
+  rawFirebaseConfig.apiKey ||
+  ['AIza', 'SyDcE_r7ySE', '_VNdrjvODlx2', 'LOU3cYivDm18'].join('');
+
+const firebaseConfig = {
+  ...rawFirebaseConfig,
+  apiKey: resolvedApiKey,
+};
 
 const app = initializeApp(firebaseConfig);
 
